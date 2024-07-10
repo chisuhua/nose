@@ -1,0 +1,9 @@
+[submodule "external/doctest"]
+	path = external/doctest
+	url = https://github.com/onqtam/doctest.git
+[submodule "external/refl-cpp"]
+	path = external/refl-cpp
+	url = https://github.com/veselink1/refl-cpp
+[submodule "external/pybind11"]
+	path = external/pybind11
+	url = https://github.com/pybind/pybind11

@@ -1,0 +1,2 @@
+option('doctest', type: 'boolean', value: true, description: 'Build with doctest support')
+
