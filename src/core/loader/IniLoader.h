@@ -1,10 +1,10 @@
-// IniLoader.hpp
-enum class Role { Master, Slave }; // 简单定义Role枚举，您可能需要更完整的定义
-
-#include "TypeManager.hpp"
-#include "Tree.hpp"
+#pragma once
+#include "TypeManager.h"
+#include "Tree.h"
 #include <regex>
 #include <sstream>
+#include <fstream>
+#include <iostream>
 #include <stdexcept>
 
 class IniLoader {
@@ -81,7 +81,8 @@ private:
                 std::smatch match;
                 if (std::regex_search(value, match, re)) {
                     std::string domainList = match[1].str();
-                    std::vector<std::shared_ptr<void>> objects;
+                    // std::vector<std::shared_ptr<void>> objects;
+                    std::vector<std::any> objects;
 
                     std::istringstream stream(domainList);
                     std::string domain;
@@ -95,7 +96,7 @@ private:
                                 if (baseNode) {
                                     for (const auto& [key, child] : baseNode->getChildren()) {
                                         auto object = child->getObject(typeName);
-                                        if (object) {
+                                        if (object.has_value()) {
                                             objects.push_back(object);
                                         }
                                     }
@@ -104,14 +105,15 @@ private:
                                 auto node = currentNode->findNode(domain);
                                 if (node) {
                                     auto object = node->getObject(typeName);
-                                    if (object) {
+                                    if (object.has_value()) {
                                         objects.push_back(object);
                                     }
                                 }
                             }
                         }
                     }
-                    return std::make_any<std::vector<std::shared_ptr<void>>>(objects);
+                    // return std::make_any<std::vector<std::shared_ptr<void>>>(objects);
+                    return objects;
                 }
             }
         }

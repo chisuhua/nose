@@ -1,7 +1,7 @@
 // ComponentBindVisitor.hpp
-#include "Visitor.hpp"
-#include "Tree.hpp"
-#include "Component.hpp"
+#include "Visitor.h"
+#include "Tree.h"
+#include "Component.h"
 
 class ComponentBindVisitor : public Visitor<void> {
 public:

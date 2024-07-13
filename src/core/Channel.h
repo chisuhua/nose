@@ -1,5 +1,5 @@
-// Channel.hpp
-#include "Wire.hpp"
+#pragma once
+#include "Wire.h"
 #include <stdexcept>
 #include <iostream>
 
@@ -27,7 +27,7 @@ public:
         slavePort_->bind(masterPort_);
     }
 
-    virtual void clockUpdate() {
+    virtual void tick() {
         std::cout << "Channel clock update" << std::endl;
     }
 

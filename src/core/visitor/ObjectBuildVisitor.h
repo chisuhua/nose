@@ -1,7 +1,7 @@
 // ObjectBuildVisitor.hpp
-#include "Visitor.hpp"
-#include "Tree.hpp"
-#include "TypeManager.hpp"
+#include "Visitor.h"
+#include "Tree.h"
+#include "TypeManager.h"
 
 class ObjectBuildVisitor : public Visitor<void> {
 public:

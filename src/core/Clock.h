@@ -7,8 +7,9 @@
 #include <map>
 #include <stdexcept>
 #include <iostream>
+#include <Component.h>
+#include <Channel.h>
 
-class Component;
 
 class Clock {
 public:
@@ -45,11 +46,11 @@ public:
 
     void tick() {
         for (auto& component : domains) {
-            component->clockUpdate();
+            component->tick();
         }
 
         for (auto& channel : channels) {
-            channel->clockUpdate();
+            channel->tick();
         }
     }
 };

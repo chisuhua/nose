@@ -1,6 +1,6 @@
 
 // Tree.hpp
-#include "Node.hpp"
+#include "Node.h"
 #include <memory>
 
 class Tree {

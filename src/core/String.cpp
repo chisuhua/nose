@@ -1,10 +1,10 @@
 #include "String.h"
 
-template<typename T, typename>
-StringPtr String:intern(T&& arg) {
-    std::string str = args;
-    return StringPool::getInstance()->intern(str.c_str(), CONSTEXPR_HASH(str.c_str()));
-};
+//template<typename T, typename>
+//StringPtr String::intern(T&& arg) {
+    //std::string str = args;
+    //return StringPool::getInstance()->intern(str.c_str(), CONSTEXPR_HASH(str.c_str()));
+//};
 
 StringPtr StringPool::intern(const char* str, std::uint32_t hash) {
     std::lock_guard<std::mutex> lock(mutex_);

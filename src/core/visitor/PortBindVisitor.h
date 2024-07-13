@@ -1,6 +1,6 @@
 // PortBindVisitor.hpp
-#include "Visitor.hpp"
-#include "Tree.hpp"
+#include "Visitor.h"
+#include "Tree.h"
 
 class PortBindVisitor : public Visitor<void> {
 public:

@@ -1,7 +1,7 @@
 // ChannelBindVisitor.hpp
-#include "Visitor.hpp"
-#include "Tree.hpp"
-#include "Channel.hpp"
+#include "Visitor.h"
+#include "Tree.h"
+#include "Channel.h"
 
 class ChannelBindVisitor : public Visitor<void> {
 public:

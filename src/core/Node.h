@@ -1,4 +1,4 @@
-// Node.hpp
+#pragma once
 #include <map>
 #include <string>
 #include <memory>
@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <refl.hpp>
 
-class Node {
+class Node : public std::enable_shared_from_this<Node> {
 public:
     using ElementProperties = std::unordered_map<std::string, std::map<std::string, std::any>>;
 
@@ -23,9 +23,7 @@ public:
     void addChild(std::shared_ptr<Node> child) { children_[child->getName()] = child; }
     const std::map<std::string, std::shared_ptr<Node>>& getChildren() const { return children_; }
     const ElementProperties& getProperties() const { return properties_; }
-    std::any getObject(const std::string& typeName) const {
-        auto it = objects_.find(typeName);
-        if (it != objects_.end()) {
+    f (it != objects_.end()) {
             return it->second;
         }
         return nullptr;

@@ -1,5 +1,5 @@
 // Wire.hpp
-#include "IPort.hpp"
+#include "IPort.h"
 #include <vector>
 #include <memory>
 #include <stdexcept>

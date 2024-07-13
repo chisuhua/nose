@@ -10,7 +10,7 @@
 #include "ComponentBindVisitor.h"
 #include "ChannelBindVisitor.h"
 #include "Port.h"
-#include "Event.h"
+//#include "Event.h"
 #include "ComponentSrc.h"
 #include "ComponentDst.h"
 

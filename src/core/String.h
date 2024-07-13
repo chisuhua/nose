@@ -1,7 +1,31 @@
 #include <iostream>
 #include <string>
+#include <memory>
 #include <stdexcept>
+#include <mutex>
+#include <unordered_map>
+#include <string_view>
+#include <cstddef>
 
+
+//#define CONSTEXPR_HASH(str) (fnv1a_32_constexpr((str), sizeof(str) - 1))
+constexpr uint32_t fnv1a(const char* str, std::size_t length) {
+    uint32_t hash = 0x811c9dc5;
+    for (std::size_t i = 0; i < length; ++i) {
+        hash ^= static_cast<uint32_t>(str[i]);
+        hash *= 0x01000193;
+    }
+    return hash;
+}
+
+uint32_t fnv1a_runtime(const char* str, std::size_t length) {
+    uint32_t hash = 0x811c9dc5;
+    for (std::size_t i = 0; i < length; ++i) {
+        hash ^= static_cast<uint32_t>(str[i]);
+        hash *= 0x01000193;
+    }
+    return hash;
+}
 
 class StringPool;
 class String;
@@ -66,8 +90,8 @@ public:
 
     FORWARD_METHOD(rfind, const std::string& str, size_t pos = std::string::npos) 
     FORWARD_METHOD(substr, size_t pos = 0, size_t len = std::string::npos)
-    FORWARD_METHOD(view)
-    FORWARD_OPERATOR(std::string)
+    //FORWARD_METHOD(view)
+    //FORWARD_OPERATOR(string)
 
     FORWARD_OPERATOR(==)
 
@@ -83,9 +107,9 @@ private:
 
     String(const char* str) : data(str) {}
     String(const std::string& str) : data(str) {}
-friend:
-    StringPool;
-}
+public:
+friend class StringPool;
+};
 
 class StringPool {
 public:
@@ -99,9 +123,10 @@ public:
         clearPool();
     }
     bool isStringIntern(const std::string& str) {
-        if (findStringByHash(CONSTEXPR_HASH(str))) { return true; }
+        if (getStringByHash(fnv1a_runtime(str.c_str(), str.length()))) { return true; }
         else return false;
     }
+
     StringPtr getStringByHash(std::uint32_t hash) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = pool_.find(hash);
@@ -125,13 +150,8 @@ private:
     std::unordered_map<std::uint32_t, std::weak_ptr<const String>> pool_;
 };
 
-constexpr uint32_t fnv1a_32_constexpr(const char *s, std::size_t count) {
-    return ((count ? fnv1a_32_constexpr(s, count - 1) : 2166136261u) ^ s[count]) * 16777619u;
-}
 
-#define CONSTEXPR_HASH(str) (fnv1a_32_constexpr((str), sizeof(str) - 1))
-
-constexpr StringPtr operator "" _hs(const char *s, std::size_t count) {
-    constexpr uint32_t hash = fnv1a_32_constexpr(s, count);
-    return StringPool::getInstance()->intern(s, hash);
+inline StringPtr operator"" _hs(const char* str, std::size_t length) {
+    uint32_t hash = fnv1a(str, length);
+    return StringPool::getInstance()->intern(str, hash);
 }
