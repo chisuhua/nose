@@ -1,3 +1,4 @@
+#pragma once
 #include "IPort.h"
 #include <tuple>
 #include <string>

@@ -1,4 +1,5 @@
 #include <Component.h>
+#include "Event.h"
 
 class ComponentSrc : public Component {
 public:

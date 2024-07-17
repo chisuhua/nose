@@ -6,22 +6,23 @@
 #include "Channel.h"
 #include "IniLoader.h"
 #include "Tree.h"
+#include "ObjectBuildVisitor.h"
 #include "PortBindVisitor.h"
 #include "ComponentBindVisitor.h"
 #include "ChannelBindVisitor.h"
 #include "Port.h"
-//#include "Event.h"
+#include "Event.h"
 #include "ComponentSrc.h"
 #include "ComponentDst.h"
 
 int main() {
     TypeManager& typeManager = TypeManager::instance();
-    typeManager.registerTemplateType<Port, IOType<Event, RSP>>("Port<IOType<Event, RSP>>");
-    typeManager.registerType<Wire>("Wire");
-    typeManager.registerType<Channel>("Channel");
-    typeManager.registerType<Clock>("Clock");
-    typeManager.registerType<ComponentSrc>("ComponentSrc");
-    typeManager.registerType<ComponentDst>("ComponentDst");
+    //typeManager.registerTemplateType<Port, IOType<Event, RSP>>();
+    typeManager.registerType<Wire>();
+    typeManager.registerType<Channel>();
+    typeManager.registerType<Clock>();
+    typeManager.registerType<ComponentSrc>();
+    typeManager.registerType<ComponentDst>();
 
     Tree tree;
     IniLoader loader(typeManager);

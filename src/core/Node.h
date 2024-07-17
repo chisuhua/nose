@@ -5,14 +5,21 @@
 #include <any>
 #include <unordered_map>
 #include <refl.hpp>
+#include "Property.h"
+#include "Visitor.h"
+#include "PathUtils.h"
 
 class Node : public std::enable_shared_from_this<Node> {
 public:
-    using ElementProperties = std::unordered_map<std::string, std::map<std::string, std::any>>;
-
     explicit Node(const std::string& name) : name_(name) {}
 
     const std::string& getName() const { return name_; }
+
+    void addChild(std::shared_ptr<Node>& child) { 
+        children_[child->getName()] = child; 
+        child->setParent(const_cast<Node*>(this)->shared_from_this());
+    }
+
     std::shared_ptr<Node> getChild(const std::string& name) const {
         auto it = children_.find(name);
         if (it != children_.end()) {
@@ -20,53 +27,62 @@ public:
         }
         return nullptr;
     }
-    void addChild(std::shared_ptr<Node> child) { children_[child->getName()] = child; }
-    const std::map<std::string, std::shared_ptr<Node>>& getChildren() const { return children_; }
-    const ElementProperties& getProperties() const { return properties_; }
-    f (it != objects_.end()) {
-            return it->second;
-        }
-        return nullptr;
-    }
-    void setObject(const std::string& typeName, std::shared_ptr<void> object) { objects_[typeName] = object; }
-    void setProperty(const std::string& typeName, const std::string& memberName, std::any value) { 
-        properties_[typeName][memberName] = value;
+
+    void setParent(const std::shared_ptr<Node>& parent) { parent_ = parent; }
+    std::weak_ptr<Node> getParent() { return parent_; }
+
+    void setObject(const std::string& type_name, std::shared_ptr<void> object) { objects_[type_name] = object; }
+    std::shared_ptr<void> getObject(const std::string& type_name) const {
+        auto it = objects_.find(type_name);
+        return (it != objects_.end()) ? it->second : nullptr;
     }
 
-    void setType(const std::string& type) { type_ = type; }
-    const std::string& getType() const { return type_; }
+    const auto& getChildren() const { return children_; }
+
+    std::unordered_map<std::string, ElementProperties> getProperties() const { 
+        return properties_;
+    }
+
+    ValueType getProperty(const std::string& type_name, const std::string& member_name) const { 
+        auto& type_property = properties_.at(type_name);
+        return type_property.at(member_name); 
+    }
+
+    void setProperty(const std::string& type_name, const std::string& member_name, ValueType value) { 
+        auto& type_property = properties_.at(type_name);
+        type_property[member_name] = value;
+    }
+
+    void accept(Visitor<void>& visitor) {
+        //for (const auto& [key, child] : children_) {
+            //child->accept(visitor);
+        //}
+        //for (const auto& [key, object] : objects_) {
+            //visitor.visitObject(object, key);
+        //}
+        visitor.visit(*this);
+    }
 
     std::shared_ptr<Node> findNode(const std::string& path) const {
-        auto parts = splitPath(path);
-        auto currentNode = const_cast<Node*>(this)->shared_from_this();
+        auto parts = PathUtils::split(path);
+        auto current_node = const_cast<Node*>(this)->shared_from_this();
 
         for (const auto& part : parts) {
-            auto child = currentNode->getChild(part);
+            auto child = current_node->getChild(part);
             if (!child) {
                 return nullptr;
             }
-            currentNode = child;
+            current_node = child;
         }
-        return currentNode;
+        return current_node;
     }
 
 private:
     std::string name_;
     std::string type_;
-    std::map<std::string, std::shared_ptr<Node>> children_;
-    ElementProperties properties_;
+    std::unordered_map<std::string, std::shared_ptr<Node>> children_;
     std::unordered_map<std::string, std::shared_ptr<void>> objects_;
-
-    static std::vector<std::string> splitPath(const std::string& path) {
-        std::vector<std::string> parts;
-        std::string item;
-        std::stringstream ss(path);
-        while (std::getline(ss, item, '/')) {
-            if (!item.empty()) {
-                parts.push_back(item);
-            }
-        }
-        return parts;
-    }
+    std::unordered_map<std::string, ElementProperties> properties_;
+    std::weak_ptr<Node> parent_;
 };
 

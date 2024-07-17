@@ -1,4 +1,4 @@
-// ChannelBindVisitor.hpp
+#pragma once
 #include "Visitor.h"
 #include "Tree.h"
 #include "Channel.h"
@@ -13,17 +13,15 @@ public:
             auto channel = std::dynamic_pointer_cast<Channel>(channelObject);
             for (const auto& portPair : channel->connect) {
                 auto port = std::dynamic_pointer_cast<IPort>(portPair);
-                if (port) {
-                    port->addObserver([channel, portName = port->getName()]() {
-                        channel->portNotified(portName);
-                    });
-                }
+                //if (port) {
+                    //port->addObserver([channel, portName = port->getName()]() {
+                        //channel->portNotified(portName);
+                    //});
+                //}
             }
         }
 
-        for (const auto& [key, child] : node.getChildren()) {
-            visit(*child);
-        }
+        Visitor<void>::visit(node);
     }
 
     void visitObject(const std::shared_ptr<void>&, const std::string&) override {}

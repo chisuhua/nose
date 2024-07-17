@@ -10,11 +10,17 @@ public:
         static std::shared_ptr<Registry> instance(new Registry());
         return instance;
     }
+
+    Registry() {
+        typeManager = TypeManager::instance();
+    }
+
 public:
     std::unordered_map<std::type_index, std::shared_ptr<void>> objectStorage;
     std::unordered_map<std::string, std::function<std::shared_ptr<void>()>> objectConstructor;
-    std::unordered_map<std::string, refl::type_descriptor> registeredTypeDesc;
-    std::vector<std::string> registeredTypeNames;
+    //std::unordered_map<std::string, refl::type_descriptor> registeredTypeDesc;
+    //std::vector<std::string> registeredTypeNames;
+    TypeManager typeManager;
 
     template<typename O, typename E>
     auto getStorage() -> Storage<O, E>* {
@@ -33,11 +39,15 @@ public:
     }
     template<typename O, typename E>
     void registerObjectType(const std::string& type_name) {
+        if (not typeManager.findMetadata(type_name)) {
+            typeManager.reisterType<O>();
+        }
+
         objectConstructor[type_name] = [](auto... args) -> std::shared_ptr<void> {
             return static_pointer_cast<void>(getStorage<T, E>()->create(args));
         };
-        registeredTypeDesc[type_name] = refl::reflect<T>();
-        registeredTypeNames.push_back(type_name);
+        //registeredTypeDesc[type_name] = refl::reflect<T>();
+        //registeredTypeNames.push_back(type_name);
     }
 
     template<typename... Args>
@@ -48,16 +58,16 @@ public:
         }
         return nullptr;
     }
-    refl::type_descriptor getTypeDescriptor(const std::string& typeName) {
-        auto it = registeredTypeDesc.find(typeName);
-        if(it != registeredTypeDesc.end()) {
-            return it->second;
-        }
-        throw std::runtime_error("Type not found");
-    }
-    const std::vector<std::string>& getRegisteredTypes() const {
-                return registeredTypeNames;
-    }
+    //refl::type_descriptor getTypeDescriptor(const std::string& typeName) {
+        //auto it = registeredTypeDesc.find(typeName);
+        //if(it != registeredTypeDesc.end()) {
+            //return it->second;
+        //}
+        //throw std::runtime_error("Type not found");
+    //}
+    //const std::vector<std::string>& getRegisteredTypes() const {
+                //return registeredTypeNames;
+    //}
 public:
     template<typename O, typename E, typename... Args>
     std::shared_ptr<O> createObject(Args&& ...) {

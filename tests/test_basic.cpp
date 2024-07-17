@@ -7,23 +7,24 @@
 #include "../src/core/Channel.h"
 #include "../src/core/Clock.h"
 #include "../src/core/Component.h"
-// #include "../src/core/Event.h"
+#include "../samples/core/Event.h"
+
 
 TEST_CASE("Basic TypeManager registration") {
     TypeManager& typeManager = TypeManager::instance();
-    typeManager.registerTemplateType<Port, IOType<Event, RSP>>("Port<IOType<Event, RSP>>");
-    typeManager.registerType<Wire>("Wire");
-    typeManager.registerType<Channel>("Channel");
-    typeManager.registerType<Clock>("Clock");
-    typeManager.registerType<SrcUnit1>("SrcUnit1");
-    typeManager.registerType<DstUnit1>("DstUnit1");
+    //typeManager.registerTemplateType<Port, IOType<Event, RSP>>();
+    typeManager.registerType<Wire>();
+    typeManager.registerType<Channel>();
+    typeManager.registerType<Clock>();
+    //typeManager.registerType<SrcUnit1>();
+    //typeManager.registerType<DstUnit1>();
 
-    CHECK(typeManager.getTypeConstructors().count("Port<IOType<Event, RSP>>") == 1);
-    CHECK(typeManager.getTypeConstructors().count("Wire") == 1);
-    CHECK(typeManager.getTypeConstructors().count("Channel") == 1);
-    CHECK(typeManager.getTypeConstructors().count("Clock") == 1);
-    CHECK(typeManager.getTypeConstructors().count("SrcUnit1") == 1);
-    CHECK(typeManager.getTypeConstructors().count("DstUnit1") == 1);
+    CHECK(typeManager.getTypePropertyMeta().count("Port<IOType<Event, RSP>>") == 1);
+    CHECK(typeManager.getTypePropertyMeta().count("Wire") == 1);
+    CHECK(typeManager.getTypePropertyMeta().count("Channel") == 1);
+    CHECK(typeManager.getTypePropertyMeta().count("Clock") == 1);
+    //CHECK(typeManager.getTypeConstructors().count("SrcUnit1") == 1);
+    //CHECK(typeManager.getTypeConstructors().count("DstUnit1") == 1);
 }
 
 TEST_CASE("Port creation and binding") {

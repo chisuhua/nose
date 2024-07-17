@@ -1,26 +1,27 @@
-// ObjectBuildVisitor.hpp
+#pragma once
 #include "Visitor.h"
 #include "Tree.h"
 #include "TypeManager.h"
+#include "Registry.h"
 
 class ObjectBuildVisitor : public Visitor<void> {
 public:
-    explicit ObjectBuildVisitor(TypeManager& typeManager) : typeManager_(typeManager) {}
+    explicit ObjectBuildVisitor(TypeManager& typeManager, Registry& registry) : typeManager_(typeManager), registry_(registry) {}
 
     void visit(Node& node) override {
         for (const auto& [typeName, properties] : node.getProperties()) {
             if (!node.getObject(typeName)) {
-                auto instance = typeManager_.create(typeName, properties);
+                auto instance = registry_.createObjectByName(typeName);
+                typeManager_.setProperties(typeName, instance, properties);
                 node.setObject(typeName, instance);
             }
         }
-
-        for (const auto& [key, child] : node.getChildren()) {
-            visit(*child);
-        }
+        Visitor<void>::visit(node);
     }
 
+    void visitObject(const std::shared_ptr<void>&, const std::string&) override {}
 private:
     TypeManager& typeManager_;
+    Registry& registry_;
 };
 

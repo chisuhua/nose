@@ -29,7 +29,7 @@ uint32_t fnv1a_runtime(const char* str, std::size_t length) {
 
 class StringPool;
 class String;
-using StringPtr = std::shared_ptr<const String>;
+using StringRef = std::shared_ptr<const String>;
 
 template<typename ...>
 using void_t = void;
@@ -74,7 +74,7 @@ struct is_valid_type<T, void_t<
 class String {
 public:
     template<typename T, typename = std::enable_if_t<is_valid_type<T>::value>>
-    static StringPtr intern(T&& arg);
+    static StringRef intern(T&& arg);
 
     std::string data;
 
@@ -117,7 +117,7 @@ public:
         static std::shared_ptr<StringPool> instance(new StringPool());
         return instance;
     }
-    StringPtr intern(const char* str, std::uint32_t hash);
+    StringRef intern(const char* str, std::uint32_t hash);
 
     ~StringPool() {
         clearPool();
@@ -127,7 +127,7 @@ public:
         else return false;
     }
 
-    StringPtr getStringByHash(std::uint32_t hash) {
+    StringRef getStringByHash(std::uint32_t hash) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = pool_.find(hash);
         if (it != pool_.end()) {
@@ -151,7 +151,7 @@ private:
 };
 
 
-inline StringPtr operator"" _hs(const char* str, std::size_t length) {
+inline StringRef operator"" _hs(const char* str, std::size_t length) {
     uint32_t hash = fnv1a(str, length);
     return StringPool::getInstance()->intern(str, hash);
 }

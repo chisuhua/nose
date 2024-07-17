@@ -1,4 +1,4 @@
-// PortBindVisitor.hpp
+#pragma once
 #include "Visitor.h"
 #include "Tree.h"
 
@@ -13,9 +13,7 @@ public:
             wire->Bind();
         }
 
-        for (const auto& [key, child] : node.getChildren()) {
-            visit(*child);
-        }
+        Visitor<void>::visit(node);
     }
 
     void visitObject(const std::shared_ptr<void>&, const std::string&) override {}

@@ -1,4 +1,4 @@
-// Wire.hpp
+#pragma once
 #include "IPort.h"
 #include <vector>
 #include <memory>
@@ -6,6 +6,8 @@
 
 struct Wire {
     std::vector<std::shared_ptr<IPort>> connect;
+
+    virtual ~Wire() = default; // 添加虚拟析构函数
 
     virtual void Bind() {
         if (connect.size() < 2) {

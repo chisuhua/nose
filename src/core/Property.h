@@ -12,6 +12,7 @@
 
 // 定义 ValueType 作为节点的属性值类型
 using ValueType = std::variant<int, float, std::string, bool, double, uint64_t, std::any>;
+using ElementProperties = std::unordered_map<std::string, ValueType>;
 
 // 辅助模板判断类型
 template <typename T>
@@ -101,6 +102,38 @@ struct default_parser {
         size_t end = str.find_last_not_of(whitespace);
 
         return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
+    }
+};
+
+enum class PropertyType
+{
+    Default = 0b0,
+    Required = 0b1,
+    Content = 0b10,
+    RequiredContent = Required | Content
+};
+
+template <typename Parser>
+struct Property : refl::attr::usage::field {
+    const Parser parser;
+    const PropertyType type;
+    constexpr Property(const Parser& parser) 
+        : parser(parser) 
+        , type(PropertyType::Default) 
+    {}
+
+    constexpr Property(PropertyType type, const Parser& parser) 
+        : parser(parser) 
+        , type(type) 
+    {}
+
+    template<typename T>
+    T parse(const std::string& value) const {
+        if constexpr (std::is_same_v<Parser, std::nullptr_t>) {
+            return default_parser<T>()(value);
+        } else {
+            return parser(value);
+        }
     }
 };
 

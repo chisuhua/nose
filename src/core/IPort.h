@@ -5,7 +5,9 @@
 #include <string>
 #include <stdexcept>
 #include <refl.hpp>
-#include <ValueType.h>
+#include <Property.h>
+#include <functional>
+#include <string_view>
 
 enum class Role {
     Master,
@@ -18,21 +20,20 @@ Role parse_role(std::string_view str) {
     throw std::runtime_error("Cannot parse " + std::string(str) + " as role");
 }
 
+template <typename T>
+using ParseFunction = std::function<T(const std::string&)>;
 
-
-template <typename Parser = decltype(parse_role)>
+template <typename Parser = ParseFunction<Role>>
 struct IoProperty : refl::attr::usage::field {
     const Role role;
     const Parser parser;
-    constexpr IoProperty(Role role) : role(role), parser(parse_role) {}
+
+    constexpr IoProperty(Role role, Parser parser = ParseFunction<Role>(parse_role))
+        : role(role), parser(parser) {}
 
     template<typename T>
     T parse(const std::string& value) const {
-        if constexpr (std::is_same_v<Parser, std::nullptr_t>) {
-            return default_parser<T>()(value);
-        } else {
-            return parser(value);
-        }
+        return parser(value);
     }
 };
 
