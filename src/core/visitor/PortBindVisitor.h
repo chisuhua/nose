@@ -9,7 +9,7 @@ public:
     void visit(Node& node) override {
         auto wireObject = node.getObject("Wire");
         if (wireObject) {
-            auto wire = std::dynamic_pointer_cast<Wire>(wireObject);
+            auto wire = std::static_pointer_cast<Wire>(wireObject);
             wire->Bind();
         }
 

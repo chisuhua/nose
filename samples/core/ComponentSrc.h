@@ -1,4 +1,6 @@
-#include <Component.h>
+#pragma once
+#include "Registry.h"
+#include "Component.h"
 #include "Event.h"
 
 class ComponentSrc : public Component {
@@ -18,4 +20,9 @@ public:
         std::cout << "ComponentSrc clock update" << std::endl;
     }
 };
+
+REFL_AUTO(
+    type(ComponentSrc, bases<Component>)
+    );
+REGISTER_OBJECT(ComponentSrc)
 

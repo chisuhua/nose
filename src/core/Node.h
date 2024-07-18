@@ -6,10 +6,14 @@
 #include <unordered_map>
 #include <refl.hpp>
 #include "Property.h"
-#include "Visitor.h"
 #include "PathUtils.h"
 
+template<typename T>
+class Visitor;
+
 class Node : public std::enable_shared_from_this<Node> {
+    using ObjectId = uint32_t;
+    using EntityId = uint32_t;
 public:
     explicit Node(const std::string& name) : name_(name) {}
 
@@ -30,6 +34,10 @@ public:
 
     void setParent(const std::shared_ptr<Node>& parent) { parent_ = parent; }
     std::weak_ptr<Node> getParent() { return parent_; }
+
+    std::unordered_map<std::string, std::shared_ptr<void>>  getObjects() const {
+        return objects_;
+    }
 
     void setObject(const std::string& type_name, std::shared_ptr<void> object) { objects_[type_name] = object; }
     std::shared_ptr<void> getObject(const std::string& type_name) const {
@@ -53,15 +61,7 @@ public:
         type_property[member_name] = value;
     }
 
-    void accept(Visitor<void>& visitor) {
-        //for (const auto& [key, child] : children_) {
-            //child->accept(visitor);
-        //}
-        //for (const auto& [key, object] : objects_) {
-            //visitor.visitObject(object, key);
-        //}
-        visitor.visit(*this);
-    }
+    void accept(Visitor<void>& visitor) ;
 
     std::shared_ptr<Node> findNode(const std::string& path) const {
         auto parts = PathUtils::split(path);

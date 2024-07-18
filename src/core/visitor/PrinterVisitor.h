@@ -7,13 +7,14 @@
 class PrinterVisitor : public Visitor<void> {
 public:
     PrinterVisitor() {}
+    virtual ~PrinterVisitor() = default;
 
     void visit(Node& node) override {
         printNode(node, 0);
         Visitor<void>::visit(node);
     }
 
-    void Visit(const std::shared_ptr<void>& obj, const std::string key) override {
+    virtual void visitObject(const std::shared_ptr<void>& obj, const std::string& key) override {
     }
 
     //void Visit(const std::shared_ptr<CustomObject>& obj) override {

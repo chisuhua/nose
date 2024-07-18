@@ -6,14 +6,14 @@
 
 class ObjectBuildVisitor : public Visitor<void> {
 public:
-    explicit ObjectBuildVisitor(TypeManager& typeManager, Registry& registry) : typeManager_(typeManager), registry_(registry) {}
+    explicit ObjectBuildVisitor(TypeManager& typeManager, std::shared_ptr<Registry> registry) : typeManager_(typeManager), registry_(registry) {}
 
     void visit(Node& node) override {
-        for (const auto& [typeName, properties] : node.getProperties()) {
-            if (!node.getObject(typeName)) {
-                auto instance = registry_.createObjectByName(typeName);
-                typeManager_.setProperties(typeName, instance, properties);
-                node.setObject(typeName, instance);
+        for (const auto& [type_name, properties] : node.getProperties()) {
+            if (!node.getObject(type_name)) {
+                auto instance = registry_->createObjectByName(type_name);
+                typeManager_.setProperties(type_name, instance, properties);
+                node.setObject(type_name, instance);
             }
         }
         Visitor<void>::visit(node);
@@ -22,6 +22,6 @@ public:
     void visitObject(const std::shared_ptr<void>&, const std::string&) override {}
 private:
     TypeManager& typeManager_;
-    Registry& registry_;
+    std::shared_ptr<Registry> registry_;
 };
 

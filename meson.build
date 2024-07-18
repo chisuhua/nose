@@ -1,6 +1,6 @@
 project('nose', 'cpp',
   version: '0.1.0',
-  default_options: ['warning_level=3', 'cpp_std=c++20'])
+  default_options: ['warning_level=3', 'cpp_std=c++17'])
 
 # 插件和依赖项的定义
 #doctest_dep = dependency('doctest', required: false)
@@ -37,10 +37,12 @@ src_files = files(
   'src/core/Component.h',
   'src/core/Tree.h',
   'src/core/Node.h',
+  'src/core/Node.cpp',
   'src/core/String.h',
   'src/core/String.cpp',
   'src/core/Storage.h',
   'src/core/Registry.h',
+  'src/core/Registry.cpp',
   'src/core/loader/IniLoader.h',
   'src/core/visitor/Visitor.h',
   'src/core/visitor/ObjectBuildVisitor.h',

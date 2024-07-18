@@ -1,4 +1,4 @@
-// Clock.hpp
+#pragma once
 #include <vector>
 #include <string>
 #include <memory>
@@ -7,8 +7,9 @@
 #include <map>
 #include <stdexcept>
 #include <iostream>
-#include <Component.h>
-#include <Channel.h>
+#include "Component.h"
+#include "Channel.h"
+#include "Registry.h"
 
 
 class Clock {
@@ -54,4 +55,11 @@ public:
         }
     }
 };
+
+REFL_AUTO(
+    type(Clock),
+    field(freq),
+    field(domains),
+    field(channels)
+    )
 

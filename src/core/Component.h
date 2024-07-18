@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include "Registry.h"
 
 class Component {
 public:
@@ -32,4 +33,15 @@ public:
     }
 };
 
+//REGISTER_NODE_OBJECT(Component,
+    //type(Component),
+    //field(ports_),
+    //field(portsUpdated_)
+    //)
 
+
+REFL_AUTO(
+    type(Component),
+    field(ports_),
+    field(portsUpdated_)
+    )

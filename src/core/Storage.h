@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <queue>
 #include <memory>
@@ -5,8 +6,8 @@
 #include <utility>
 #include <cstddef>
 #include <new> // std::launcher
-               //
-class EntityNull;
+#include <cassert>
+#include "Object.h"
 
 template<typename ObjectType, typename EntityType = EntityNull>
 class Storage {
@@ -21,41 +22,41 @@ class Storage {
     using EntityId = typename EntityType::EntityId;
 
     std::unordered_map<EntityId, ObjectId> entityToIndex; // EntityId to ObjectId mapping
-    std::unordered_map<ObjecdtId, EntityId> indexToEntity; // ObjectId to EnityId
+    std::unordered_map<ObjectId, EntityId> indexToEntity; // ObjectId to EnityId
                                                            //
     static constexpr int ReserveSize = 1024;
     static constexpr int PageSize = 64;
-public
+public:
     Storage() : self(SelfPtr(this, [](SelfType* p) {})) {
                 poolStorage.reserve(ReserveSize);
         expandStorage();
     }
 
-        ~Storage() {
-        }
+    ~Storage() {
+    }
     template<typename... Args>
     ObjectPtr create(Args&&... args) {
-                if (!freeList.empty()) {
-                        expandStorage();
-                }
+        if (!freeList.empty()) {
+            expandStorage();
+        }
 
-        free_id = freeList.front();
+        auto& free_id = freeList.front();
         // 使用std::launder来重新解释转换指针，确保正确处理可能存在的别名。
         ObjectType* object = std::launder(reinterpret_cast<ObjectType*>(&poolStorage[free_id]));
         freeList.pop();
 
         // placement new 
-                if constexpr (in_place_delete<ObjectType>::value) {
-                new(object) ObjectType(std::forward<Args>(args)...);
-                } else {
-                new(object) ObjectType(std::forward<Args>(args)...);
-                }
+        if constexpr (in_place_delete<ObjectType>::value) {
+            new(object) ObjectType(std::forward<Args>(args)...);
+        } else {
+            new(object) ObjectType(std::forward<Args>(args)...);
+        }
 
         return getSharedPtrFromIndex(free_id);
     }
     // create shared_ptr from objectId
     ObjectPtr getSharedPtrFromIndex(ObjectId id) {
-        assert(id < poolStorage.size();
+        assert(id < poolStorage.size());
         ObjectType* p = std::launder(reinterpret_cast<ObjectType*>(&poolStorage[id]));
         if (activePtr.count(p) > 0) { 
             auto obj_ptr = activePtr[p].lock();
@@ -81,19 +82,19 @@ public
     ObjectId getObjectId(const ObjectType* p) const {
         auto diff = static_cast<std::ptrdiff_t>(reinterpret_cast<char*>(p) - reinterpret_cast<char*>(poolStorage.data()));
         size_t index = diff / sizeof(StorageType);
-        return (objectId)index;
+        return (ObjectId)index;
     }
     void addObject(EntityId entity, ObjectPtr ptr) {
-        static_assert(!std::is_same<EntityType, EntityNull>, " EntityNull is not allowd to add object")
+        static_assert(!std::is_same<EntityType, EntityNull>::value, " EntityNull is not allowd to add object");
         if (entityToIndex.find(entity) != entityToIndex.end()) {
             throw std::runtime_error("Can't add since Entity is already add this Object");
         }
         ObjectPtr obj_ptr;
-        if (activePtr.count(ptr.get()) {
+        if (activePtr.count(ptr.get())) {
             obj_ptr = ptr;
         } else {
             // if input Object is created outside of this storage
-            obj_ptr = create(Ptr);
+            obj_ptr = create(ptr);
         }
         ObjectId id = getObjectId(obj_ptr.get());
         entityToIndex[entity] = id;
@@ -102,12 +103,12 @@ public
 
     template<typename... Args>
     void addObject(EntityId entity, Args&&... args) {
-        static_assert(!std::is_same<EntityType, EntityNull>, " EntityNull is not allowd to add object")
+        static_assert(!std::is_same<EntityType, EntityNull>::value, " EntityNull is not allowd to add object");
         auto obj_ptr = create(std::forward<Args>(args)...);
         addObject(entity, obj_ptr);
     }
     void removeObject(EntityId entity) {
-        static_assert(!std::is_same<EntityType, EntityNull>, " EntityNull is not allowd to add object")
+        static_assert(!std::is_same_v<EntityType, EntityNull>, " EntityNull is not allowd to add object");
         if (entityToIndex.find(entity) == entityToIndex.end()) {
             throw std::runtime_error("Can't remove since Entity don't add this Object");
         }
@@ -147,14 +148,14 @@ private:
     void expandStorage() {
         size_t current_size = poolStorage.size();
         size_t new_size = current_size + PageSize;
-        assert(new_size < ReserveSize);
+        //cassert(new_size < ReserveSize);
+        //static_assert(new_size < ReserveSize);
         poolStorage.resize(new_size);
 
         for (size_t i = current_size; i < new_size; ++i) {
             void* new_space = &poolStorage[i];
-            freeList.push(new_space);
+            freeList.push(reinterpret_cast<size_t>(new_space));
         }
     }
     // Iterator...
-
-}
+};

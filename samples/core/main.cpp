@@ -1,15 +1,19 @@
 #include <iostream>
 #include <future>
+#include <thread>
+#include <chrono>
 #include "TypeManager.h"
 #include "Clock.h"
 #include "Component.h"
 #include "Channel.h"
 #include "IniLoader.h"
 #include "Tree.h"
+#include "Visitor.h"
 #include "ObjectBuildVisitor.h"
 #include "PortBindVisitor.h"
 #include "ComponentBindVisitor.h"
 #include "ChannelBindVisitor.h"
+#include "PrinterVisitor.h"
 #include "Port.h"
 #include "Event.h"
 #include "ComponentSrc.h"
@@ -18,11 +22,11 @@
 int main() {
     TypeManager& typeManager = TypeManager::instance();
     //typeManager.registerTemplateType<Port, IOType<Event, RSP>>();
-    typeManager.registerType<Wire>();
-    typeManager.registerType<Channel>();
-    typeManager.registerType<Clock>();
-    typeManager.registerType<ComponentSrc>();
-    typeManager.registerType<ComponentDst>();
+    //typeManager.registerType<Wire>();
+    //typeManager.registerType<Channel>();
+    //typeManager.registerType<Clock>();
+    //typeManager.registerType<ComponentSrc>();
+    //typeManager.registerType<ComponentDst>();
 
     Tree tree;
     IniLoader loader(typeManager);
@@ -30,7 +34,7 @@ int main() {
     try {
         loader.load("config.ini", tree);
 
-        ObjectBuildVisitor builderVisitor(typeManager);
+        ObjectBuildVisitor builderVisitor(typeManager, Registry::getInstance());
         tree.accept(builderVisitor);
 
         ComponentBindVisitor componentBindVisitor;

@@ -1,4 +1,6 @@
-#include <Component.h>
+#pragma once
+#include "Registry.h"
+#include "Component.h"
 
 class ComponentDst : public Component {
 public:
@@ -15,3 +17,8 @@ public:
     }
 };
 
+REFL_AUTO(
+    type(ComponentDst, bases<Component>)
+    );
+
+REGISTER_OBJECT(ComponentDst)

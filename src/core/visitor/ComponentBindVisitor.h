@@ -6,7 +6,7 @@
 class ComponentBindVisitor : public Visitor<void> {
 public:
     void visit(Node& node) override {
-        auto component = std::dynamic_pointer_cast<Component>(node.getObject(node.getName()));
+        auto component = std::static_pointer_cast<Component>(node.getObject(node.getName()));
         if (component) {
             for (const auto& [key, childNode] : node.getChildren()) {
                 auto port_node = childNode->getObject("Port");

@@ -1,14 +1,17 @@
 #pragma once
-#include "Wire.h"
 #include <stdexcept>
 #include <iostream>
+#include "Wire.h"
+#include "Registry.h"
 
 class Channel : public Wire {
 public:
+    virtual ~Channel() = default; // 添加虚拟析构函数
+                               //
     std::shared_ptr<IPort> masterPort_;
     std::shared_ptr<IPort> slavePort_;
 
-    void Bind() override {
+    virtual void Bind() override {
         if (connect.size() < 2) {
             throw std::runtime_error("Insufficient connected ports for binding");
         }
@@ -35,4 +38,10 @@ public:
         std::cout << "Channel notified for port: " << portName << std::endl;
     }
 };
+
+REFL_AUTO(
+        type(Channel, bases<Wire>),
+        field(masterPort_),
+        field(slavePort_)
+        )
 

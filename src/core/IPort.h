@@ -4,10 +4,10 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
-#include <refl.hpp>
 #include <Property.h>
 #include <functional>
 #include <string_view>
+#include <refl.hpp>
 
 enum class Role {
     Master,

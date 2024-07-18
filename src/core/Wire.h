@@ -3,8 +3,10 @@
 #include <vector>
 #include <memory>
 #include <stdexcept>
+#include "Registry.h"
 
-struct Wire {
+class Wire {
+public:
     std::vector<std::shared_ptr<IPort>> connect;
 
     virtual ~Wire() = default; // 添加虚拟析构函数
@@ -25,4 +27,9 @@ struct Wire {
         slavePort->bind(masterPort);
     }
 };
+
+REFL_AUTO(
+    type(Wire),
+    field(connect)
+    );
 

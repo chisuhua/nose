@@ -10,9 +10,9 @@ public:
     void visit(Node& node) override {
         auto channelObject = node.getObject("Channel");
         if (channelObject) {
-            auto channel = std::dynamic_pointer_cast<Channel>(channelObject);
+            auto channel = std::static_pointer_cast<Channel>(channelObject);
             for (const auto& portPair : channel->connect) {
-                auto port = std::dynamic_pointer_cast<IPort>(portPair);
+                auto port = std::static_pointer_cast<IPort>(portPair);
                 //if (port) {
                     //port->addObserver([channel, portName = port->getName()]() {
                         //channel->portNotified(portName);

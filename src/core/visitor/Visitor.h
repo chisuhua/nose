@@ -1,12 +1,13 @@
 #pragma once
 #include <memory>
 #include <string>
-
-class Node;
+#include "Node.h"
 
 template<typename T>
 class Visitor {
 public:
+    virtual ~Visitor() = default;
+
     virtual void visit(Node& node) {
         for (const auto& [key, child] : node.getChildren()) {
             child->accept(*this);

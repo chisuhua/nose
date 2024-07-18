@@ -12,13 +12,13 @@ struct RSP  {
 
 REFL_AUTO(
         type(Event),
-        field(data, IoProperty<>(Role::Master)),
-        field(valid, IoProperty<>(Role::Master))
-        )
+        field(data, IoProperty(Role::Master)),
+        field(valid, IoProperty(Role::Master))
+        );
 
 REFL_AUTO(
         type(RSP),
-        field(ready, IoProperty<>(Role::Master))
-        )
+        field(ready, IoProperty(Role::Master))
+        );
 
 
