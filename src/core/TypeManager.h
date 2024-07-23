@@ -10,7 +10,7 @@
 #include "Property.h"
 #include "Port.h"
 
-using ValueParser = ValueType(*)(const std::string&, const std::string&);
+using KeyValueParser = ValueType(*)(const std::string&, const std::string&);
 using PropertiesSetter = void(*)(const std::shared_ptr<void>, ElementProperties&);
 
 class PropertyMeta {
@@ -31,7 +31,7 @@ public:
         return value_parser_(path_key, value);
     }
 
-    void setProperties(std::shared_ptr<void> instance, ElementProperties properties) {
+    void setProperties(std::shared_ptr<void> instance, ElementProperties& properties) {
         return properties_setter_(instance, properties);
     }
 
@@ -41,23 +41,25 @@ public:
 
 private:
     std::string name_;
-    ValueParser value_parser_;
+    KeyValueParser value_parser_;
     PropertiesSetter properties_setter_;
 
     template <typename T>
-    static ValueType& ParsePropertyValue(std::string& path_key, std::string& value) {
+    static ValueType ParsePropertyValue(const std::string& path_key, const std::string& value) {
         for_each(refl::reflect<T>().members, [&](auto member) {
-            if (path_key == "*" || member.name.str() == path_key) {
+            if constexpr (refl::descriptor::has_attribute<Property>(member)) {
                 using member_type = typename decltype(member)::value_type;
                 const auto& prop = refl::descriptor::get_attribute<Property>(member);
-                return ValueType(prop.template parse<member_type>(value));
-                //return TypeManager::parseValue<member_type>(prop, value);
+                if (path_key == "*" || member.name.str() == path_key) {
+                    return ValueType(prop.template parse<member_type>(value));
+                }
             }
         });
+        return ValueType(nullptr);
     }
 
     template <typename T>
-    static void SetProperties(std::shared_ptr<void> instance, ElementProperties properties) {
+    static void SetProperties(const std::shared_ptr<void> instance, ElementProperties& properties) {
         auto instanceT = std::static_pointer_cast<T>(instance);
         for_each(refl::reflect<T>().members, [&](auto member) {
             if constexpr (refl::descriptor::has_attribute<Property>(member)) {
@@ -219,16 +221,17 @@ public:
     //}
 
 
-    template<typename member_type, typename Parser = std::nullptr_t>
-    static ValueType parseValue(const Property<Parser>& prop, const std::string& valueStr) {
-        //if constexpr (std::is_same_v<Parser, std::nullptr_t>) {
-            //return default_parser<member_type>()(valueStr);
-        //} else {
-            return ValueType(prop.template parse<member_type>(valueStr));
-        //}
-    }
+    //template<typename member_type, typename Parser = std::nullptr_t>
+    //static ValueType parseValue(const Property<Parser>& prop, const std::string& valueStr) {
+        ////if constexpr (std::is_same_v<Parser, std::nullptr_t>) {
+            ////return default_parser<member_type>()(valueStr);
+        ////} else {
+            ////return ValueType(prop.template parse<member_type>(valueStr));
+            //return ValueType(prop.parse(valueStr));
+        ////}
+    //}
 
-    const std::unordered_map<std::string, PropertyMeta>& getTypePropertyMeta() const {
+    const std::unordered_map<std::string, PropertyMeta>& getPropertyMeta() const {
         return metadata;
     }
     //}

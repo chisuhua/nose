@@ -20,30 +20,31 @@ Role parse_role(std::string_view str) {
     throw std::runtime_error("Cannot parse " + std::string(str) + " as role");
 }
 
-template <typename T>
-using ParseFunction = std::function<T(const std::string&)>;
+//template <typename T>
+//using ParseFunction = std::function<T(const std::string&)>;
 
-template <typename Parser = ParseFunction<Role>>
-struct IoProperty : refl::attr::usage::field {
-    const Role role;
-    const Parser parser;
+//template <typename Parser = ParseFunction<Role>>
+//struct IoProperty : refl::attr::usage::field {
+    //const Role role;
+    //const Parser parser;
 
-    constexpr IoProperty(Role role, Parser parser = ParseFunction<Role>(parse_role))
-        : role(role), parser(parser) {}
+    //constexpr IoProperty(Role role, Parser parser = ParseFunction<Role>(parse_role))
+        //: role(role), parser(parser) {}
 
-    template<typename T>
-    T parse(const std::string& value) const {
-        return parser(value);
-    }
-};
+    //template<typename T>
+    //T parse(const std::string& value) const {
+        //return parser(value);
+    //}
+//};
 
 class IPort {
 public:
     virtual ~IPort() = default;
-    Role role;
+    Role role_;
+    Role getPortRole() { return role_; }
 
     //virtual std::any getIO() = 0;
     virtual void bind(std::shared_ptr<IPort> other) = 0;
-    //virtual std::shared_ptr<IPort> clone() const = 0;
+    virtual std::shared_ptr<IPort> clone() const = 0;
 };
 

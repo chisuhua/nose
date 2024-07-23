@@ -14,11 +14,11 @@
 
 class Clock {
 public:
-    uint64_t freq;
-    std::vector<std::shared_ptr<Component>> domains;
-    std::vector<std::shared_ptr<Channel>> channels;
+    uint64_t freq_;
+    std::vector<std::shared_ptr<Component>> components_;
+    std::vector<std::shared_ptr<Channel>> channels_;
 
-    Clock() : freq(0) {}
+    Clock() : freq_(0) {}
 
     void parseFrequency(const std::string& freqStr) {
         static const std::map<std::string, uint64_t> suffixes = {
@@ -36,9 +36,9 @@ public:
 
             auto it = suffixes.find(suffix);
             if (it != suffixes.end()) {
-                freq = base * it->second;
+                freq_ = base * it->second;
             } else {
-                freq = base;
+                freq_ = base;
             }
         } else {
             throw std::invalid_argument("Invalid frequency format");
@@ -46,7 +46,7 @@ public:
     }
 
     void tick() {
-        for (auto& component : domains) {
+        for (auto& component : components) {
             component->tick();
         }
 
@@ -56,10 +56,18 @@ public:
     }
 };
 
+ValueType ParseComponents(const std::string& valueStr) {
+    return ValueType(std::any(valueStr));
+};
+
+ValueType ParseChannels(const std::string& valueStr) {
+    return ValueType(std::any(valueStr));
+};
+
 REFL_AUTO(
     type(Clock),
-    field(freq),
-    field(domains),
-    field(channels)
+    field(freq_),
+    field(components_, Property<ValueParser>(&ParseComponents)),
+    field(channels_, Property<ValueParser>(&ParseChannels))
     )
 

@@ -11,7 +11,7 @@
 #include <vector>
 
 // 定义 ValueType 作为节点的属性值类型
-using ValueType = std::variant<int, float, std::string, bool, double, uint64_t, std::any>;
+using ValueType = std::variant<nullptr_t, int, float, std::string, bool, double, uint64_t, std::any>;
 using ElementProperties = std::unordered_map<std::string, ValueType>;
 
 // 辅助模板判断类型
@@ -42,30 +42,30 @@ struct is_container<
         void>> : std::true_type {};
 
 // 默认解析器
-template <typename T>
-struct default_parser {
-    T operator()(const std::string& valueStr) const {
-        if constexpr (std::is_same_v<T, int>) {
-            return std::stoi(valueStr);
-        } else if constexpr (std::is_same_v<T, float>) {
-            return std::stof(valueStr);
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            return valueStr;
-        } else if constexpr (std::is_same_v<T, bool>) {
-            return valueStr == "true" || valueStr == "1";
-        } else if constexpr (std::is_same_v<T, double>) {
-            return std::stod(valueStr);
-        } else if constexpr (std::is_same_v<T, uint64_t>) {
-            return std::stoull(valueStr);
-        } else if constexpr (is_container<T>::value) {
-            return ValueType(std::any(parseContainer<T>(valueStr)));
-        } else {
-            static_assert(always_false<T>::value, "Unsupported type for default_parser");
-        }
+namespace parser {
+    static std::string trim(const std::string& str) {
+        const char* whitespace = " \t\n\r\f\v";
+        size_t start = str.find_first_not_of(whitespace);
+        size_t end = str.find_last_not_of(whitespace);
+
+        return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
     }
 
+    static std::vector<std::string> splitInitializer(const std::string& str) {
+        std::vector<std::string> elements;
+        std::istringstream stream(str.substr(1, str.size() - 2)); // 去掉最外层大括号
+        std::string elem;
+        while (std::getline(stream, elem, ',')) {
+            elements.push_back(trim(elem));
+        }
+        return elements;
+    }
+
+    template <typename T>
+    ValueType default_parser(const std::string& valueStr);
+
     template <typename Container>
-    Container parseContainer(const std::string& valueStr) const {
+    Container parseContainer(const std::string& valueStr) {
         Container container;
         if constexpr (is_container<Container>::value && std::is_same_v<Container, std::vector<typename Container::value_type>>) {
             std::vector<std::string> elements = splitInitializer(valueStr);
@@ -86,24 +86,27 @@ struct default_parser {
         return container;
     }
 
-    static std::vector<std::string> splitInitializer(const std::string& str) {
-        std::vector<std::string> elements;
-        std::istringstream stream(str.substr(1, str.size() - 2)); // 去掉最外层大括号
-        std::string elem;
-        while (std::getline(stream, elem, ',')) {
-            elements.push_back(trim(elem));
+    template <typename T>
+    ValueType default_parser(const std::string& valueStr) {
+        if constexpr (std::is_same_v<T, int>) {
+            return std::stoi(valueStr);
+        } else if constexpr (std::is_same_v<T, float>) {
+            return std::stof(valueStr);
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            return valueStr;
+        } else if constexpr (std::is_same_v<T, bool>) {
+            return valueStr == "true" || valueStr == "1";
+        } else if constexpr (std::is_same_v<T, double>) {
+            return std::stod(valueStr);
+        } else if constexpr (std::is_same_v<T, uint64_t>) {
+            return std::stoull(valueStr);
+        } else if constexpr (is_container<T>::value) {
+            return ValueType(std::any(parseContainer<T>(valueStr)));
+        } else {
+            static_assert(always_false<T>::value, "Unsupported type for default_parser, please use customer paser function");
         }
-        return elements;
     }
-
-    static std::string trim(const std::string& str) {
-        const char* whitespace = " \t\n\r\f\v";
-        size_t start = str.find_first_not_of(whitespace);
-        size_t end = str.find_last_not_of(whitespace);
-
-        return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
-    }
-};
+}
 
 enum class PropertyType
 {
@@ -113,24 +116,32 @@ enum class PropertyType
     RequiredContent = Required | Content
 };
 
-template <typename Parser>
+//template <typename T>
+//using ParseFunction = std::function<T(const std::string&)>;
+//using ParserFuncType = std::function<ValueType(const std::string&)>;
+typedef ValueType (*ValueParser)(const std::string&);
+
+
+template <typename Parser = std::nullptr_t>
 struct Property : refl::attr::usage::field {
+    //using Parser = ParseFunction<T>;
+    //using Parser = decltype(parser::default_parser
     const Parser parser;
     const PropertyType type;
-    constexpr Property(const Parser& parser) 
+    constexpr Property(const Parser& parser = nullptr)
         : parser(parser) 
         , type(PropertyType::Default) 
     {}
 
-    constexpr Property(PropertyType type, const Parser& parser) 
+    constexpr Property(PropertyType type, const Parser& parser = nullptr)
         : parser(parser) 
         , type(type) 
     {}
 
-    template<typename T>
-    T parse(const std::string& value) const {
+    template <typename member_type>
+    ValueType parse(const std::string& value) const {
         if constexpr (std::is_same_v<Parser, std::nullptr_t>) {
-            return default_parser<T>()(value);
+            return parser::default_parser<member_type>(value);
         } else {
             return parser(value);
         }

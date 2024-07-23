@@ -1,5 +1,6 @@
 #pragma once
 #include "refl.hpp"
+#include "Mixin.h"
 #include <cassert>
 
 template <typename T>
@@ -65,12 +66,30 @@ struct value_proxy : refl::runtime::proxy<value_proxy<T>, T>
     }
 };
 
+template<typename Derived, typename... Types>
+struct Bundle : public Mixin<Types...> {
+    virtual ~Bundle() = default;
 
-#define BUNDLE(TypeName, ...) \
-    struct TypeName : public  Mixin<__VA_ARGS__> { \
-    }; \
-    namespace refl_impl::metadata { template<> struct type_info__<TypeName> { \
-        REFL_DETAIL_TYPE_BODY((TypeName), __VA_ARGS__)
+    // 模板方法
+    template <typename T>
+    void getRole() {
+        static_cast<Derived*>(this)->template getRole<T>();
+    }
+    
+    template<typename T>
+    Role getRole() {
+        return Role::Master;
+    }
+};
+
+
+//#define bundle(typename, ...) \
+    //namespace bundle { struct typename : public  mixin<__va_args__> { \
+
+        //role getrole()
+    //}; } \
+    //namespace refl_impl::metadata { template<> struct type_info__<bundle::typename> { \
+        //refl_detail_type_body((bundle::typename), __va_args__)
 
 
 

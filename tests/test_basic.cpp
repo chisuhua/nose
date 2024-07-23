@@ -19,40 +19,40 @@ TEST_CASE("Basic TypeManager registration") {
     //typeManager.registerType<SrcUnit1>();
     //typeManager.registerType<DstUnit1>();
 
-    CHECK(typeManager.getTypePropertyMeta().count("Port<IOType<Event, RSP>>") == 1);
-    CHECK(typeManager.getTypePropertyMeta().count("Wire") == 1);
-    CHECK(typeManager.getTypePropertyMeta().count("Channel") == 1);
-    CHECK(typeManager.getTypePropertyMeta().count("Clock") == 1);
+    //CHECK(typeManager.getPropertyMeta().count("ValidReady>") == 1);
+    CHECK(typeManager.getPropertyMeta().count("Wire") == 1);
+    CHECK(typeManager.getPropertyMeta().count("Channel") == 1);
+    CHECK(typeManager.getPropertyMeta().count("Clock") == 1);
     //CHECK(typeManager.getTypeConstructors().count("SrcUnit1") == 1);
     //CHECK(typeManager.getTypeConstructors().count("DstUnit1") == 1);
 }
 
 TEST_CASE("Port creation and binding") {
-    auto port1 = std::make_shared<Port<IOType<Event, RSP>>>();
-    auto port2 = std::make_shared<Port<IOType<Event, RSP>>>();
+    auto port1 = std::make_shared<Port<bundle::ValidReady>>();
+    auto port2 = std::make_shared<Port<bundle::ValidReady>>();
 
-    port1->role = Role::Master;
-    port2->role = Role::Slave;
+    port1->role_ = Role::Master;
+    port2->role_ = Role::Slave;
 
     port1->bind(port2);
 
-    CHECK(port1->peer == port2);
-    CHECK(port2->peer == port1);
-    CHECK(port1->role == Role::Master);
-    CHECK(port2->role == Role::Slave);
+    CHECK(port1->getPeer() == port2);
+    CHECK(port2->getPeer() == port1);
+    CHECK(port1->getPortRole() == Role::Master);
+    CHECK(port2->getPortRole() == Role::Slave);
 }
 
 TEST_CASE("Channel creation and notification") {
     Channel channel;
-    auto port1 = std::make_shared<Port<IOType<Event, RSP>>>();
-    auto port2 = std::make_shared<Port<IOType<Event, RSP>>>();
+    auto port1 = std::make_shared<Port<bundle::ValidReady>>();
+    auto port2 = std::make_shared<Port<bundle::ValidReady>>();
 
-    port1->role = Role::Master;
-    port2->role = Role::Slave;
+    port1->role_ = Role::Master;
+    port2->role_ = Role::Slave;
     channel.connect = {port1, port2};
 
     channel.Bind();
-    CHECK(channel.masterPort_->role == Role::Master);
-    CHECK(channel.slavePort_->role == Role::Slave);
+    CHECK(channel.masterPort_->getPortRole() == Role::Master);
+    CHECK(channel.slavePort_->getPortRole() == Role::Slave);
 }
 

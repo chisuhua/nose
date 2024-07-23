@@ -1,4 +1,5 @@
 #include "refl.hpp"
+#include "Registry.h"
 #include "pybind11/pybind11.h"
 
 namespace py = pybind11;
@@ -14,7 +15,7 @@ public:
 
 void GeneratePybindBindings(py::module& m) {
     auto registry = Registry::getInstance();
-    for(const auto& [type_name, constructor] : registry.createObjectByName) {
+    for(const auto& [type_name, constructor] : registry.objectConstructor) {
         auto type_desc = registry.getTypeDescriptor(type_name);
 
         // 首先创建一个泛型的Python类

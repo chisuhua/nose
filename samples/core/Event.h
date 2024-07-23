@@ -11,19 +11,13 @@ struct RSP  {
     bool ready;
 };
 
-//REFL_AUTO(
-        //type(Event),
-        //field(data, IoProperty(Role::Master)),
-        //field(valid, IoProperty(Role::Master))
-        //);
+namespace bundle {
+    struct ValidReady : public Bundle<ValidReady, Event, RSP> {
+        template <typename T>
+        Role getRole() { return Role::Master; }
+    };
 
-//REFL_AUTO(
-        //type(RSP),
-        //field(ready, IoProperty(Role::Master))
-        //);
+    template <>
+    Role ValidReady::getRole<RSP>() { return Role::Slave; };
 
-BUNDLE(data_rsp, Event, Rsp)
-    REFL_FIELD(Event, IoProperty(Role::Master))
-    REFL_FIELD(Rsp, IoProperty(Role::Master))
-REFL_END
-
+}

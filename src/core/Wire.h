@@ -7,19 +7,20 @@
 
 class Wire {
 public:
-    std::vector<std::shared_ptr<IPort>> connect;
+    std::vector<std::shared_ptr<IPort>> connect_;
+    uint64_t test_only;
 
     virtual ~Wire() = default; // 添加虚拟析构函数
 
     virtual void Bind() {
-        if (connect.size() < 2) {
+        if (connect_.size() < 2) {
             throw std::runtime_error("Insufficient connected ports for binding");
         }
 
-        auto masterPort = connect[0];
-        auto slavePort = connect[1];
+        auto masterPort = connect_[0];
+        auto slavePort = connect_[1];
 
-        if (masterPort->role != Role::Master || slavePort->role != Role::Slave) {
+        if (masterPort->getPortRole() != Role::Master || slavePort->getPortRole() != Role::Slave) {
             throw std::runtime_error("Invalid port roles for binding");
         }
 
@@ -28,8 +29,14 @@ public:
     }
 };
 
+ValueType ParseConnection(const std::string& valueStr) {
+    // TODO
+    return ValueType(std::any(valueStr));
+};
+
 REFL_AUTO(
     type(Wire),
-    field(connect)
-    );
+    field(test_only),
+    field(connect_, Property<ValueParser>(&ParseConnection))
+);
 

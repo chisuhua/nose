@@ -19,6 +19,10 @@
 #include "ComponentSrc.h"
 #include "ComponentDst.h"
 
+    REGISTER_OBJECT(Wire)
+    REGISTER_OBJECT(Channel)
+    REGISTER_OBJECT(Clock)
+
 int main() {
     TypeManager& typeManager = TypeManager::instance();
     //typeManager.registerTemplateType<Port, IOType<Event, RSP>>();
@@ -61,7 +65,7 @@ int main() {
 
         std::future<void> future = std::async(std::launch::async, [&, dstUnit1] {
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            auto dstPort = std::dynamic_pointer_cast<Port<IOType<Event, RSP>>>(dstUnit1->getPort("port1"));
+            auto dstPort = std::dynamic_pointer_cast<Port<bundle::ValidReady>>(dstUnit1->getPort("port1"));
             Event io;
             *dstPort >> io;
             std::cout << "ComponentDst received event: data = " << io.data << ", valid = " << io.valid << std::endl;
