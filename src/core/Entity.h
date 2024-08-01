@@ -11,20 +11,20 @@
 template<typename T>
 class Visitor;
 
-class Node : public std::enable_shared_from_this<Node> {
+class Entity : public std::enable_shared_from_this<Entity> {
     using ObjectId = uint32_t;
     using EntityId = uint32_t;
 public:
-    explicit Node(const std::string& name) : name_(name) {}
+    explicit Entity(const std::string& name) : name_(name) {}
 
     const std::string& getName() const { return name_; }
 
-    void addChild(std::shared_ptr<Node>& child) { 
+    void addChild(std::shared_ptr<Entity>& child) { 
         children_[child->getName()] = child; 
-        child->setParent(const_cast<Node*>(this)->shared_from_this());
+        child->setParent(const_cast<Entity*>(this)->shared_from_this());
     }
 
-    std::shared_ptr<Node> getChild(const std::string& name) const {
+    std::shared_ptr<Entity> getChild(const std::string& name) const {
         auto it = children_.find(name);
         if (it != children_.end()) {
             return it->second;
@@ -32,8 +32,8 @@ public:
         return nullptr;
     }
 
-    void setParent(const std::shared_ptr<Node>& parent) { parent_ = parent; }
-    std::weak_ptr<Node> getParent() { return parent_; }
+    void setParent(const std::shared_ptr<Entity>& parent) { parent_ = parent; }
+    std::weak_ptr<Entity> getParent() { return parent_; }
 
     std::unordered_map<std::string, std::shared_ptr<void>>  getObjects() const {
         return objects_;
@@ -63,26 +63,26 @@ public:
 
     void accept(Visitor<void>& visitor) ;
 
-    std::shared_ptr<Node> findNode(const std::string& path) const {
+    std::shared_ptr<Entity> findEntity(const std::string& path) const {
         auto parts = PathUtils::split(path);
-        auto current_node = const_cast<Node*>(this)->shared_from_this();
+        auto current_entity = const_cast<Entity*>(this)->shared_from_this();
 
         for (const auto& part : parts) {
-            auto child = current_node->getChild(part);
+            auto child = current_entity->getChild(part);
             if (!child) {
                 return nullptr;
             }
-            current_node = child;
+            current_entity = child;
         }
-        return current_node;
+        return current_entity;
     }
 
 private:
     std::string name_;
     std::string type_;
-    std::unordered_map<std::string, std::shared_ptr<Node>> children_;
+    std::unordered_map<std::string, std::shared_ptr<Entity>> children_;
     std::unordered_map<std::string, std::shared_ptr<void>> objects_;
     std::unordered_map<std::string, ElementProperties> properties_;
-    std::weak_ptr<Node> parent_;
+    std::weak_ptr<Entity> parent_;
 };
 

@@ -1,10 +1,10 @@
-#include "Node.h"
+#include "Entity.h"
 #include "Visitor.h"
 
 
 
 
-void Node::accept(Visitor<void>& visitor) {
+void Entity::accept(Visitor<void>& visitor) {
     //for (const auto& [key, child] : children_) {
         //child->accept(visitor);
     //}

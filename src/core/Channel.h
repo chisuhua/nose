@@ -12,19 +12,19 @@ public:
     std::shared_ptr<IPort> slavePort_;
 
     virtual void Bind() override {
-        if (connect.size() < 2) {
+        if (connect_.size() < 2) {
             throw std::runtime_error("Insufficient connected ports for binding");
         }
 
-        masterPort_ = connect[0]->clone();
-        slavePort_ = connect[1]->clone();
+        masterPort_ = connect_[0]->clone();
+        slavePort_ = connect_[1]->clone();
 
         if (masterPort_->getPortRole() != Role::Master || slavePort_->getPortRole() != Role::Slave) {
             throw std::runtime_error("Invalid port roles for binding");
         }
 
-        masterPort_->bind(connect[1]);
-        slavePort_->bind(connect[0]);
+        masterPort_->bind(connect_[1]);
+        slavePort_->bind(connect_[0]);
 
         masterPort_->bind(slavePort_);
         slavePort_->bind(masterPort_);

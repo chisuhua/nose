@@ -5,13 +5,13 @@
 
 class ComponentBindVisitor : public Visitor<void> {
 public:
-    void visit(Node& node) override {
-        auto component = std::static_pointer_cast<Component>(node.getObject(node.getName()));
+    void visit(Entity& entity) override {
+        auto component = std::static_pointer_cast<Component>(entity.getObject(entity.getName()));
         if (component) {
-            for (const auto& [key, childNode] : node.getChildren()) {
-                auto port_node = childNode->getObject("Port");
-                if (port_node) {
-                    component->addPort(key, std::static_pointer_cast<IPort>(port_node));
+            for (const auto& [key, childEntity] : entity.getChildren()) {
+                auto port_entity = childEntity->getObject("Port");
+                if (port_entity) {
+                    component->addPort(key, std::static_pointer_cast<IPort>(port_entity));
 
                     //if (port->role == Role::Slave) {
                         //auto portNotify = [component, key]() {
@@ -22,7 +22,7 @@ public:
                 }
             }
         }
-        Visitor<void>::visit(node);
+        Visitor<void>::visit(entity);
     }
 
     void visitObject(const std::shared_ptr<void>&, const std::string&) override {}

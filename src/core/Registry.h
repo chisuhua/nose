@@ -100,7 +100,7 @@ struct ObjectRegistrar {
 #define REGISTER_NODE_OBJECT(O, ...) \
     do { \
     REFL_AUTO(__VA_ARGS__) \
-    static ObjectRegistrar<O, Node> auto_##O##_registrar(); \
+    static ObjectRegistrar<O, Entity> auto_##O##_registrar(); \
     }  while(0) 
 
 #define REGISTER_OBJECT(O) static ObjectRegistrar<O, EntityNull> auto_##O##_registrar(); 

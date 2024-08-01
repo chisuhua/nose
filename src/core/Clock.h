@@ -46,11 +46,11 @@ public:
     }
 
     void tick() {
-        for (auto& component : components) {
+        for (auto& component : components_) {
             component->tick();
         }
 
-        for (auto& channel : channels) {
+        for (auto& channel : channels_) {
             channel->tick();
         }
     }

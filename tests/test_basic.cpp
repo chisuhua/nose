@@ -49,7 +49,7 @@ TEST_CASE("Channel creation and notification") {
 
     port1->role_ = Role::Master;
     port2->role_ = Role::Slave;
-    channel.connect = {port1, port2};
+    channel.connect_ = {port1, port2};
 
     channel.Bind();
     CHECK(channel.masterPort_->getPortRole() == Role::Master);

@@ -9,9 +9,9 @@ public:
     PrinterVisitor() {}
     virtual ~PrinterVisitor() = default;
 
-    void visit(Node& node) override {
-        printNode(node, 0);
-        Visitor<void>::visit(node);
+    void visit(Entity& entity) override {
+        printEntity(entity, 0);
+        Visitor<void>::visit(entity);
     }
 
     virtual void visitObject(const std::shared_ptr<void>& obj, const std::string& key) override {
@@ -31,9 +31,9 @@ public:
     //}
 
 private:
-    void printNode(Node& node, int level) {
+    void printEntity(Entity& entity, int level) {
         std::string indent(level * 2, ' ');
-        std::cout << indent << node.getName() << "\n";
+        std::cout << indent << entity.getName() << "\n";
     }
 };
 

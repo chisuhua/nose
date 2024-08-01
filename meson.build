@@ -29,7 +29,7 @@ doctest_inc = include_directories('external/doctest')
 refl_cpp_inc = include_directories('external/refl-cpp/include')
 pybind11_inc = include_directories('external/pybind11/include')
 
-src_inc = include_directories('src/core', 'src/core/visitor', 'src/core/loader', 'src/utils', 'src/graph', 'src/compile', 'src/executor')
+src_inc = include_directories('src/core', 'src/core/visitor', 'src/core/loader', 'src/utils', 'src/system', 'src/system/graph', 'src/execution/compile', 'src/execution/runtime')
 
 python3_headers = dependency('python3', required : true)
 python3_lib = dependency('python3', required : true)
@@ -49,8 +49,8 @@ core_files = files(
   'src/core/Clock.h',
   'src/core/Component.h',
   'src/core/Tree.h',
-  'src/core/Node.h',
-  'src/core/Node.cpp',
+  'src/core/Entity.h',
+  'src/core/Entity.cpp',
   'src/core/String.h',
   'src/core/String.cpp',
   'src/core/Storage.h',

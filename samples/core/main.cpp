@@ -25,12 +25,6 @@
 
 int main() {
     TypeManager& typeManager = TypeManager::instance();
-    //typeManager.registerTemplateType<Port, IOType<Event, RSP>>();
-    //typeManager.registerType<Wire>();
-    //typeManager.registerType<Channel>();
-    //typeManager.registerType<Clock>();
-    //typeManager.registerType<ComponentSrc>();
-    //typeManager.registerType<ComponentDst>();
 
     Tree tree;
     IniLoader loader(typeManager);
@@ -50,14 +44,14 @@ int main() {
         ChannelBindVisitor channelBindVisitor(tree);
         tree.accept(channelBindVisitor);
 
-        auto srcNode = tree.findNode("/a/b:ComponentSrc");
-        auto srcUnit1 = std::static_pointer_cast<ComponentSrc>(srcNode->getObject("ComponentSrc"));
+        auto srcEntity = tree.findEntity("/a/b:ComponentSrc");
+        auto srcUnit1 = std::static_pointer_cast<ComponentSrc>(srcEntity->getObject("ComponentSrc"));
 
-        auto dstNode = tree.findNode("/a/b/c:ComponentDst");
-        auto dstUnit1 = std::static_pointer_cast<ComponentDst>(dstNode->getObject("ComponentDst"));
+        auto dstEntity = tree.findEntity("/a/b/c:ComponentDst");
+        auto dstUnit1 = std::static_pointer_cast<ComponentDst>(dstEntity->getObject("ComponentDst"));
 
-        auto clockNode = tree.findNode("/a/clock/clock1:Clock");
-        auto clock = std::static_pointer_cast<Clock>(clockNode->getObject("Clock"));
+        auto clockEntity = tree.findEntity("/a/clock/clock1:Clock");
+        auto clock = std::static_pointer_cast<Clock>(clockEntity->getObject("Clock"));
 
         if (clock) {
             clock->tick();

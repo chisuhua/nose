@@ -47,7 +47,7 @@ public:
 
     void createPath(Tree &tree, const std::string &path, const std::string &value_str = "") {
         auto parts = PathUtils::split(path);
-        auto current_node = (path.front() == '/') ? tree.getRoot() : tree.getCurrent();
+        auto current_entity = (path.front() == '/') ? tree.getRoot() : tree.getCurrent();
         std::string type_name;
         bool is_object = false;
 
@@ -63,15 +63,15 @@ public:
             if (is_object) {
                 if (i == parts.size() - 1) {
                     ValueType value = typeManager_.parsePropertyValue(type_name, part, value_str);
-                    current_node->setProperty(type_name, part, value);
+                    current_entity->setProperty(type_name, part, value);
                 }
             } else {
-                auto child = current_node->getChild(part);
+                auto child = current_entity->getChild(part);
                 if (!child) {
-                    child = std::make_shared<Node>(part);
-                    current_node->addChild(child);
+                    child = std::make_shared<Entity>(part);
+                    current_entity->addChild(child);
                 }
-                current_node = child;
+                current_entity = child;
             }
         }
     }
@@ -86,7 +86,7 @@ private:
         return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
     }
 
-    //std::any parseValueIfNeeded(std::shared_ptr<Node> current_node, const std::string& memberName, const std::string& value) {
+    //std::any parseValueIfNeeded(std::shared_ptr<Entity> current_entity, const std::string& memberName, const std::string& value) {
         //// 遍历 TypeManager 中注册的所有类型，处理 :<Type> 的值
         //auto registeredTypes = typeManager_.getTypeConstructors();
 
@@ -107,9 +107,9 @@ private:
                             //domain = domain.substr(0, domain.find(":" + type_name));
                             //if (domain.find('*') != std::string::npos) {
                                 //auto basePath = domain.substr(0, domain.size() - 1);
-                                //auto baseNode = current_node->findNode(basePath);
-                                //if (baseNode) {
-                                    //for (const auto& [key, child] : baseNode->getChildren()) {
+                                //auto baseEntity = current_entity->findEntity(basePath);
+                                //if (baseEntity) {
+                                    //for (const auto& [key, child] : baseEntity->getChildren()) {
                                         //auto object = child->getObject(type_name);
                                         //if (object.has_value()) {
                                             //objects.push_back(object);
@@ -117,9 +117,9 @@ private:
                                     //}
                                 //}
                             //} else {
-                                //auto node = current_node->findNode(domain);
-                                //if (node) {
-                                    //auto object = node->getObject(type_name);
+                                //auto entity = current_entity->findEntity(domain);
+                                //if (entity) {
+                                    //auto object = entity->getObject(type_name);
                                     //if (object.has_value()) {
                                         //objects.push_back(object);
                                     //}
@@ -134,12 +134,12 @@ private:
         //}
 
         //// 其他普通情况处理
-        //const auto& type = typeManager_.getTypeConstructors().at(current_node->getType());
+        //const auto& type = typeManager_.getTypeConstructors().at(current_entity->getType());
         //refl::runtime::for_each(type.members, [&](auto member) {
             //if (member.name.str() == memberName) {
                 //using member_type = typename decltype(member)::value_type;
                 //const auto& prop = refl::descriptor::get_attribute<IoProperty<>>(member);
-                //current_node->setProperty(type.name().str(), memberName, TypeManager::parseValue<member_type>(prop, value));
+                //current_entity->setProperty(type.name().str(), memberName, TypeManager::parseValue<member_type>(prop, value));
             //}
         //});
 
