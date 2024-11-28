@@ -11,7 +11,7 @@ public:
         auto channelObject = entity.getObject("Channel");
         if (channelObject) {
             auto channel = std::static_pointer_cast<Channel>(channelObject);
-            for (const auto& portPair : channel->connect) {
+            for (const auto& portPair : channel->connect_) {
                 auto port = std::static_pointer_cast<IPort>(portPair);
                 //if (port) {
                     //port->addObserver([channel, portName = port->getName()]() {

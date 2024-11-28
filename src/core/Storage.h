@@ -13,6 +13,7 @@ template<typename ObjectType, typename EntityType = EntityNull>
 class Storage {
     using SelfType = Storage<ObjectType, EntityType>;
     using SelfPtr = std::shared_ptr<SelfType>;
+public:
         // static const size_t initialSize = 64;
     // static_assert(std::is_base_of<Object, ObjectTtype>::value, "T must be a subclass of Object");
     using StorageType = typename std::aligned_storage<sizeof(ObjectType), alignof(ObjectType)>::type;
@@ -26,7 +27,6 @@ class Storage {
                                                            //
     static constexpr int ReserveSize = 1024;
     static constexpr int PageSize = 64;
-public:
     Storage() : self(SelfPtr(this, [](SelfType* p) {})) {
                 poolStorage.reserve(ReserveSize);
         expandStorage();
@@ -71,7 +71,7 @@ public:
             //    ptr->~ObjectType();  pool is already destroy, no need to destroy 
             }
         });
-        activePtr.insert({p, std::weak_ptr<ObjectType>(p)});
+        activePtr.insert({p, std::weak_ptr<ObjectType>(ptr)});
     }
 
         // get objectId from shared_ptr
@@ -80,7 +80,7 @@ public:
         return getObjectId(p);
     }
     ObjectId getObjectId(const ObjectType* p) const {
-        auto diff = static_cast<std::ptrdiff_t>(reinterpret_cast<char*>(p) - reinterpret_cast<char*>(poolStorage.data()));
+        auto diff = static_cast<std::ptrdiff_t>(reinterpret_cast<const char*>(p) - reinterpret_cast<const char*>(poolStorage.data()));
         size_t index = diff / sizeof(StorageType);
         return (ObjectId)index;
     }

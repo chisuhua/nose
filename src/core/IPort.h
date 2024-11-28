@@ -48,3 +48,12 @@ public:
     virtual std::shared_ptr<IPort> clone() const = 0;
 };
 
+ValueType ParseRole(const std::string& valueStr) {
+    return ValueType(std::any(parse_role(valueStr)));
+}
+
+REFL_AUTO(
+    type(IPort),
+    field(role_, Property<ValueParser>(&ParseRole))
+    )
+

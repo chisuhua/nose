@@ -57,8 +57,11 @@ public:
     }
 
     void setProperty(const std::string& type_name, const std::string& member_name, ValueType value) { 
-        auto& type_property = properties_.at(type_name);
-        type_property[member_name] = value;
+        properties_[type_name][member_name] = value;
+        // auto it = properties_.find(type_name);
+        // properties_.insert_or_assign(type_name, {{member_name, value}});
+        // auto& type_property = properties_.at(type_name);
+        // type_property[member_name] = value;
     }
 
     void accept(Visitor<void>& visitor) ;

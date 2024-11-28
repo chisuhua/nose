@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <string>
 #include <memory>
@@ -9,7 +10,7 @@
 
 
 //#define CONSTEXPR_HASH(str) (fnv1a_32_constexpr((str), sizeof(str) - 1))
-constexpr uint32_t fnv1a(const char* str, std::size_t length) {
+constexpr inline uint32_t fnv1a(const char* str, std::size_t length) {
     uint32_t hash = 0x811c9dc5;
     for (std::size_t i = 0; i < length; ++i) {
         hash ^= static_cast<uint32_t>(str[i]);
@@ -29,24 +30,31 @@ uint32_t fnv1a_runtime(const char* str, std::size_t length) {
 
 class StringPool;
 class String;
-using StringRef = std::shared_ptr<const String>;
+using StringPtr = std::shared_ptr<const String>;
 
-template<typename ...>
-using void_t = void;
+template<typename T>
+struct is_allowed_string_type : 
+    std::disjunction<
+        std::is_same<std::decay_t<T>, std::string>,
+        std::is_same<std::decay_t<T>, char*>
+    > {};
 
-template <typename, typename = void_t<>>
-struct is_valid_type : std::false_type {};
-
-template <typename T>
-struct is_valid_type<T, void_t<
-        std::enable_if_t<
-            std::is_same_v<std::remove_reference<T>, std::string> ||
-            std::is_same_v<std::remove_reference<T>, const std::string&> ||
-            std::is_same_v<std::remove_reference<T>, const char*> ||
-            std::is_same_v<std::remove_reference<T>, char*>
-        >
->> : std::true_type {};
-
+// template<typename ...>
+// using void_t = void;
+//
+// template <typename, typename = void_t<>>
+// struct is_valid_type : std::false_type {};
+//
+// template <typename T>
+// struct is_valid_type<T, void_t<
+//         std::enable_if<
+//             std::is_same_v<std::remove_reference<T>, std::string> ||
+//             std::is_same_v<std::remove_reference<T>, const std::string&> ||
+//             std::is_same_v<std::remove_reference<T>, const char*> ||
+//             std::is_same_v<std::remove_reference<T>, char*>
+//         >
+// >> : std::true_type {};
+//
 // 定义宏以前向声明任意参数数目的成员函数
 #define FORWARD_METHOD(FuncName, ...) \
     template <typename... Args> \
@@ -73,9 +81,9 @@ struct is_valid_type<T, void_t<
 
 class String {
 public:
-    template<typename T, typename = std::enable_if_t<is_valid_type<T>::value>>
-    static StringRef intern(T&& arg);
-
+    // template<typename T, typename = std::enable_if_t<is_valid_type<T>::value>>
+    // static StringPtr intern(T&& arg);
+    //
     std::string data;
 
     FORWARD_METHOD(length)
@@ -104,12 +112,13 @@ private:
     // no copy and assign constructor
     String(const String&) = delete;
     String& operator=(const String&) = delete;
+    explicit String(const char* str) : data(str) {}
+    explicit String(const std::string& str) : data(str) {}
 
-    String(const char* str) : data(str) {}
-    String(const std::string& str) : data(str) {}
 public:
 friend class StringPool;
 };
+
 
 class StringPool {
 public:
@@ -117,7 +126,15 @@ public:
         static std::shared_ptr<StringPool> instance(new StringPool());
         return instance;
     }
-    StringRef intern(const char* str, std::uint32_t hash);
+
+    //template<typename T, typename = std::enable_if_t<is_valid_type<T>::value>>
+    template<typename T, typename = std::enable_if_t<is_allowed_string_type<T>::value>>
+    static StringPtr try_emplace(T&& arg) {
+        std::string str(arg);
+        return StringPool::getInstance()->intern(str.c_str(), fnv1a(str.c_str(), str.length()));
+    }
+
+    StringPtr intern(const char* str, std::uint32_t hash);
 
     ~StringPool() {
         clearPool();
@@ -127,7 +144,7 @@ public:
         else return false;
     }
 
-    StringRef getStringByHash(std::uint32_t hash) {
+    StringPtr getStringByHash(std::uint32_t hash) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = pool_.find(hash);
         if (it != pool_.end()) {
@@ -150,8 +167,82 @@ private:
     std::unordered_map<std::uint32_t, std::weak_ptr<const String>> pool_;
 };
 
+class StringRef {
+public:
+    //template<typename T, typename = std::enable_if_t<is_valid_type<T>::value>>
+    template<typename T, typename = std::enable_if_t<is_allowed_string_type<T>::value>>
+    StringRef(T&& arg) : ptr_(StringPool::try_emplace(std::forward<T>(arg))) {}
 
-inline StringRef operator"" _hs(const char* str, std::size_t length) {
+    StringRef(StringPtr ptr) : ptr_(ptr) {}
+    StringRef(StringPtr& ptr) : ptr_(ptr) {}
+
+    StringRef(const StringRef& other) : ptr_(other.ptr_) {};
+    // StringRef& operator=(const StringRef& other) : ptr_(other.ptr_) {};
+
+    StringRef(StringRef&& other) noexcept : ptr_(std::move(other.ptr_)) {}
+    StringRef& operator=(StringRef&& other) noexcept {
+        if (this != &other) {
+            ptr_ = std::move(other.ptr_);
+        }
+        return *this;
+    }
+
+    // 获取共享指针
+    operator StringPtr() const {
+        return ptr_;
+    }
+
+    // StringRef(const std::string& arg) : ptr_(String::intern(arg)) {}
+    // StringRef(std::string arg) : ptr_(String::intern(arg)) {}
+    // StringRef(StringPtr arg) : ptr_(arg) {}
+
+    const String* operator->() const {
+        return ptr_.get();
+    }
+
+    const String& operator*() const {
+        return *ptr_;
+    }
+
+    bool operator==(const StringRef& other) const {
+        return ptr_.get() == other.ptr_.get();
+    }
+
+    bool operator!=(const StringRef& other) const {
+        return ptr_.get() != other.ptr_.get();
+        //return !(*this == other);
+    }
+
+    const String* getRawPointer() const {
+        return ptr_.get();
+    }
+
+private:
+    StringPtr ptr_;
+};
+
+// 自定义哈希函数
+namespace std {
+    template<>
+    struct hash<StringRef> {
+        size_t operator()(const StringRef& ref) const {
+            // 使用 shared_ptr 的 get() 方法来获取原始指针，并使用 std::hash 来计算哈希值
+            //return std::hash<std::shared_ptr<const String>>{}(ref.operator std::shared_ptr<const String>());
+            return std::hash<const String*>{}(static_cast<StringPtr>(ref).get());
+        }
+    };
+}
+
+
+
+inline StringPtr operator"" _hs(const char* str, std::size_t length) {
     uint32_t hash = fnv1a(str, length);
     return StringPool::getInstance()->intern(str, hash);
 }
+
+// template<typename T, typename>
+// StringPtr String::intern(T&& arg) {
+//     std::string str = arg;
+//     return StringPool::getInstance()->intern(str.c_str(), fnv1a(str.c_str(), str.length()));
+// };
+//

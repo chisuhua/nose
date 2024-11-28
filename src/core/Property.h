@@ -99,7 +99,7 @@ namespace parser {
         } else if constexpr (std::is_same_v<T, double>) {
             return std::stod(valueStr);
         } else if constexpr (std::is_same_v<T, uint64_t>) {
-            return std::stoull(valueStr);
+            return std::stoul(valueStr);
         } else if constexpr (is_container<T>::value) {
             return ValueType(std::any(parseContainer<T>(valueStr)));
         } else {

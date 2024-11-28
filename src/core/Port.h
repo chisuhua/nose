@@ -241,3 +241,6 @@ private:
     SelfPtr peer_;
 };
 
+REFL_AUTO(
+        template((typename T), (Port<T>), bases<IPort>)
+        );

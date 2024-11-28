@@ -1,4 +1,5 @@
 #pragma once
+#include <cxxabi.h>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -6,7 +7,10 @@
 #include <functional>
 #include <variant>
 #include <any>
+#include <type_traits>
+#include <typeinfo>
 #include <refl.hpp>
+#include "String.h"
 #include "Property.h"
 #include "Port.h"
 
@@ -130,30 +134,52 @@ public:
     static const TypeInfo& Get()
     {
         // here we create the singleton instance for this particular type
-        static const TypeInfo ti(refl::reflect<T>());
+        //static const TypeInfo ti(refl::reflect<T>());
+        using decayType= typename std::decay<T>::type;
+        static const TypeInfo ti(typeid(decayType));
         return ti;
     }
 
-    const std::string& Name() const
+    std::string demangle(const char* mangle_name) {
+        int status = -4;
+        std::unique_ptr<char, void(*)(void*)> res {
+            abi::__cxa_demangle(mangle_name, NULL, NULL, &status),
+            std::free
+        };
+        return (status == 0) ? res.get() : mangle_name;
+    }
+
+    StringRef Name() const
     {
         return name_;
     }
 
 private:
 
+    const std::type_info& type_;
+
     // were only storing the name for demonstration purposes,
     // but this can be extended to hold other properties as well
-    std::string name_;
+    // std::string name_;
+    StringRef name_;
 
     // given a type_descriptor, we construct a TypeInfo
     // with all the metadata we care about (currently only name)
-    template <typename T, typename... Fields>
-    TypeInfo(refl::type_descriptor<T> td)
-        : name_(td.name)
+    // template <typename T, typename... Fields>
+    // TypeInfo(refl::type_descriptor<T> td)
+    //     : name_(td.name)
+    // {
+    // }
+
+    TypeInfo(const std::type_info& ti)
+        : type_(ti)
+        , name_(demangle(ti.name()))
     {
+        //name_ = String::intern(demangle(ti.name()));
     }
 
 };
+
 
 class TypeManager {
 public:
@@ -165,16 +191,16 @@ public:
     TypeManager() = default;
 
     template <typename T>
-    const std::string& getTypeName() {
-        auto& ti = TypeInfo::Get<::refl::trait::remove_qualifiers_t<T>>();
+    StringRef getTypeName() {
+        auto& ti = TypeInfo::Get<T>();
         return ti.Name();
     }
 
     template <typename T>
-    const std::string& registerType() {
-        auto& type_name = getTypeName<T>();
+    StringRef registerType() {
+        StringRef type_name = getTypeName<T>();
         auto it = metadata.find(type_name);
-        if (it != metadata.end()) {
+        if (it == metadata.end()) {
             metadata[type_name] = PropertyMeta::createMetadata<T>();
         }
         return type_name;
@@ -231,13 +257,13 @@ public:
         ////}
     //}
 
-    const std::unordered_map<std::string, PropertyMeta>& getPropertyMeta() const {
+    const std::unordered_map<StringRef, PropertyMeta>& getPropertyMeta() const {
         return metadata;
     }
     //}
 
 
-    ValueType parsePropertyValue(const std::string& type_name, const std::string& path_key, const std::string& value) const {
+    ValueType parsePropertyValue(StringRef type_name, const std::string& path_key, const std::string& value) const {
         return metadata.at(type_name).parsePropertyValue(path_key, value);
         //auto it = metadata.find(type_name);
         //if (it != metadata.end()) {
@@ -246,12 +272,12 @@ public:
         //throw std::runtime_error("Type is not registered!");
     }
 
-    void setProperties(const std::string& type_name, std::shared_ptr<void> instance, ElementProperties properties) {
+    void setProperties(StringRef type_name, std::shared_ptr<void> instance, ElementProperties properties) {
         metadata.at(type_name).setProperties(instance, properties);
     }
 
 private:
-    std::unordered_map<std::string, PropertyMeta> metadata;
+    std::unordered_map<StringRef, PropertyMeta> metadata;
 
 
     //std::unordered_map<std::string, ConstructorFunction> constructors_;

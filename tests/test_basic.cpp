@@ -20,9 +20,9 @@ TEST_CASE("Basic TypeManager registration") {
     //typeManager.registerType<DstUnit1>();
 
     //CHECK(typeManager.getPropertyMeta().count("ValidReady>") == 1);
-    CHECK(typeManager.getPropertyMeta().count("Wire") == 1);
-    CHECK(typeManager.getPropertyMeta().count("Channel") == 1);
-    CHECK(typeManager.getPropertyMeta().count("Clock") == 1);
+    CHECK(typeManager.getPropertyMeta().count("Wire"_hs) == 1);
+    CHECK(typeManager.getPropertyMeta().count("Channel"_hs) == 1);
+    CHECK(typeManager.getPropertyMeta().count("Clock"_hs) == 1);
     //CHECK(typeManager.getTypeConstructors().count("SrcUnit1") == 1);
     //CHECK(typeManager.getTypeConstructors().count("DstUnit1") == 1);
 }

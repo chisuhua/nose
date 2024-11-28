@@ -23,6 +23,9 @@
     REGISTER_OBJECT(Channel)
     REGISTER_OBJECT(Clock)
 
+    using port = Port<bundle::ValidReady>;
+    REGISTER_OBJECT(port)
+
 int main() {
     TypeManager& typeManager = TypeManager::instance();
 

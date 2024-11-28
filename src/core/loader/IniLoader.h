@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include "Tree.h"
 #include "TypeManager.h"
+#include "String.h"
 #include "PathUtils.h"
 
 class IniLoader {
@@ -30,42 +31,43 @@ public:
 
             if (line.front() == '[' && line.back() == ']') {
                 current_section = line.substr(1, line.size() - 2);
-                tree.changeCurrent(current_section);
+                auto current_entity = createPath(tree, current_section);
+                //tree.changeCurrent(current_section);
+                tree.setCurrent(current_entity);
             } else {
                 auto delimiterPos = line.find('=');
                 if (delimiterPos != std::string::npos) {
                     std::string key = trim(line.substr(0, delimiterPos));
                     std::string value = trim(line.substr(delimiterPos + 1));
-                    createPath(tree, current_section + "/" + key, value);
+                    createPath(tree, key, value);
                 } else {
-                    createPath(tree, current_section + "/" + line);
+                    createPath(tree, line);
                 }
             }
         }
         file.close();
     }
 
-    void createPath(Tree &tree, const std::string &path, const std::string &value_str = "") {
+    std::shared_ptr<Entity> createPath(Tree &tree, const std::string &path, const std::string &value_str = "") {
         auto parts = PathUtils::split(path);
         auto current_entity = (path.front() == '/') ? tree.getRoot() : tree.getCurrent();
         std::string type_name;
-        bool is_object = false;
+        bool is_current_object = false;
+        bool is_parent_object = false;
 
         for (size_t i = 0; i < parts.size(); ++i) {
+            is_parent_object = is_current_object;
             auto part = parts[i];
             auto pos = part.find(':');
             if (pos != std::string::npos) {
                 type_name = PathUtils::parseTypeName(part.substr(pos + 1));
                 part = part.substr(0, pos);
-                is_object = true;
+                is_current_object = true;
+            } else {
+                is_current_object = false;
             }
 
-            if (is_object) {
-                if (i == parts.size() - 1) {
-                    ValueType value = typeManager_.parsePropertyValue(type_name, part, value_str);
-                    current_entity->setProperty(type_name, part, value);
-                }
-            } else {
+            if ((i < (parts.size() - 1)) or value_str == "") {
                 auto child = current_entity->getChild(part);
                 if (!child) {
                     child = std::make_shared<Entity>(part);
@@ -73,7 +75,15 @@ public:
                 }
                 current_entity = child;
             }
+
+            if (i == (parts.size() - 1)) {
+                if (is_parent_object and value_str != "") {
+                    ValueType value = typeManager_.parsePropertyValue(type_name, part, value_str);
+                    current_entity->setProperty(type_name, part, value);
+                }
+            }
         }
+        return current_entity;
     }
 
 private:

@@ -12,6 +12,7 @@ template<>
 struct in_place_delete<void> : std::false_type {};
 
 class EntityNull {
+public:
     using ObjectId = uint32_t;
     using EntityId = uint32_t;
 };

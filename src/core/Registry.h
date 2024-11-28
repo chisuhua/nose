@@ -16,35 +16,37 @@ public:
     Registry() = default;
     
 public:
-    std::unordered_map<std::string, std::shared_ptr<void>> objectStorage;
-    std::unordered_map<std::string, std::function<std::shared_ptr<void>()>> objectConstructor;
+    std::unordered_map<StringRef, std::shared_ptr<void>> objectStorage;
+    std::unordered_map<StringRef, std::function<std::shared_ptr<void>()>> objectConstructor;
     //std::unordered_map<std::string, refl::type_descriptor> registeredTypeDesc;
     //std::vector<std::string> registeredTypeNames;
 
     template<typename O, typename E>
-    auto getStorage() -> Storage<O, E>* {
+    auto getStorage() -> std::shared_ptr<Storage<O, E>> {
         static_assert(refl::trait::is_reflectable<O>::value, "T must be a reflectable type.");
         using StorageType = Storage<O, E>;
 
-        constexpr auto& ti = TypeInfo::Get<::refl::trait::remove_qualifiers_t<StorageType>>();
+        //constexpr auto& ti = TypeInfo::Get<StorageType>();
+        auto& ti = TypeInfo::Get<StorageType>();
+        //auto& ti = TypeInfo::Get<::refl::trait::remove_qualifiers_t<StorageType>>();
 
         auto it = objectStorage.find(ti.Name());
         if (it == objectStorage.end()) {
             auto storage = std::make_shared<StorageType>();
             objectStorage[ti.Name()] = std::static_pointer_cast<void>(storage);
-            return storage.get();
+            return storage;
         }
-        return std::static_pointer_cast<StorageType>(it->second.get());
+        return std::static_pointer_cast<StorageType>(it->second);
     }
     template<typename O, typename E>
-    void registerObject(const std::string& type_name) {
-        auto result = objectConstructor.try_emplace(type_name, [](auto... args) -> std::shared_ptr<void> {
+    void registerObject(StringRef type_name) {
+        objectConstructor.try_emplace(type_name, [this](auto... args) -> std::shared_ptr<void> {
             return std::static_pointer_cast<void>(getStorage<O, E>()->create(args...));
         });
     }
 
     template<typename... Args>
-    std::shared_ptr<void> createObjectByName(const std::string& type_name, Args&... args) {
+    std::shared_ptr<void> createObjectByName(StringRef type_name, Args&... args) {
         auto it = objectConstructor.find(type_name);
         if(it != objectConstructor.end()) {
             return std::static_pointer_cast<void>(it->second(std::forward<Args>(args)...));
@@ -92,7 +94,7 @@ public:
 template <typename O, typename E>
 struct ObjectRegistrar {
     ObjectRegistrar() {
-        auto& type_name = TypeManager::instance().registerType<O>();
+        StringRef type_name = TypeManager::instance().registerType<O>();
         Registry::getInstance()->registerObject<O, E>(type_name);
     }
 };
@@ -103,4 +105,4 @@ struct ObjectRegistrar {
     static ObjectRegistrar<O, Entity> auto_##O##_registrar(); \
     }  while(0) 
 
-#define REGISTER_OBJECT(O) static ObjectRegistrar<O, EntityNull> auto_##O##_registrar(); 
+#define REGISTER_OBJECT(O) static ObjectRegistrar<O, EntityNull> auto_##O##_registrar;
