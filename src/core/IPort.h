@@ -9,51 +9,61 @@
 #include <string_view>
 #include <refl.hpp>
 
+class Trans;
+
 enum class Role {
     Master,
     Slave,
 };
 
-Role parse_role(std::string_view str) {
-    if (str == "master") return Role::Master;
-    if (str == "slave") return Role::Slave;
-    throw std::runtime_error("Cannot parse " + std::string(str) + " as role");
-}
-
-//template <typename T>
-//using ParseFunction = std::function<T(const std::string&)>;
-
-//template <typename Parser = ParseFunction<Role>>
-//struct IoProperty : refl::attr::usage::field {
-    //const Role role;
-    //const Parser parser;
-
-    //constexpr IoProperty(Role role, Parser parser = ParseFunction<Role>(parse_role))
-        //: role(role), parser(parser) {}
-
-    //template<typename T>
-    //T parse(const std::string& value) const {
-        //return parser(value);
-    //}
-//};
-
 class IPort {
+    using SelfPtr = std::shared_ptr<IPort>;
 public:
-    virtual ~IPort() = default;
-    Role role_;
-    Role getPortRole() { return role_; }
+    IPort() : peer_(nullptr) {}
 
-    //virtual std::any getIO() = 0;
-    virtual void bind(std::shared_ptr<IPort> other) = 0;
-    virtual std::shared_ptr<IPort> clone() const = 0;
+    IPort(const IPort& _other): role(_other.role)
+    {}
+
+    ~IPort() = default;
+
+    Role getRole() { return role; }
+    void setRole(Role role_) { role = role_; }
+
+    void bind(SelfPtr other) {
+            peer_ = other;
+    }
+
+    IPort& operator << (Trans* t) {
+        auto& peer_data = peer_->trans_;
+        peer_data.push_back(t);
+        //this->trans_.push(t);
+        return *this;
+    }
+
+    IPort& operator >> (Trans* t) {
+        auto& peer_data = peer_->trans_;
+        t = this->trans_.back();
+        this->trans_.pop_back();
+        return *this;
+    }
+
+    std::shared_ptr<IPort> clone() const {
+        auto clonedPort = std::make_shared<IPort>();
+        clonedPort->peer_ = this->peer_;
+        clonedPort->role = this->role;
+        return clonedPort;
+    }
+
+    SelfPtr getPeer() { return peer_; }
+private:
+    SelfPtr peer_;
+    std::vector<Trans*> trans_;
+    Role role;
+    
 };
-
-ValueType ParseRole(const std::string& valueStr) {
-    return ValueType(std::any(parse_role(valueStr)));
-}
 
 REFL_AUTO(
     type(IPort),
-    field(role_, Property<ValueParser>(&ParseRole))
+    field(role)
     )
 

@@ -19,7 +19,7 @@ public:
         masterPort_ = connect_[0]->clone();
         slavePort_ = connect_[1]->clone();
 
-        if (masterPort_->getPortRole() != Role::Master || slavePort_->getPortRole() != Role::Slave) {
+        if (masterPort_->getRole() != Role::Master || slavePort_->getRole() != Role::Slave) {
             throw std::runtime_error("Invalid port roles for binding");
         }
 
@@ -39,14 +39,14 @@ public:
     }
 };
 
-ValueType ParsePort(const std::string& valueStr) {
-    //TODO
-    return ValueType(std::any(valueStr));
-};
+//ValueType ParsePort(const std::string& valueStr) {
+    ////TODO
+    //return ValueType(std::any(valueStr));
+//};
 
 REFL_AUTO(
         type(Channel, bases<Wire>),
-        field(masterPort_, Property<ValueParser>(&ParsePort)),
-        field(slavePort_, Property<ValueParser>(&ParsePort))
+        field(masterPort_),
+        field(slavePort_)
         );
 

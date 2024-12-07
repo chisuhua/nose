@@ -20,7 +20,7 @@ public:
         auto masterPort = connect_[0];
         auto slavePort = connect_[1];
 
-        if (masterPort->getPortRole() != Role::Master || slavePort->getPortRole() != Role::Slave) {
+        if (masterPort->getRole() != Role::Master || slavePort->getRole() != Role::Slave) {
             throw std::runtime_error("Invalid port roles for binding");
         }
 
@@ -29,14 +29,14 @@ public:
     }
 };
 
-ValueType ParseConnection(const std::string& valueStr) {
-    // TODO
-    return ValueType(std::any(valueStr));
-};
+//ValueType ParseConnection(const std::string& valueStr) {
+    //// TODO
+    //return ValueType(std::any(valueStr));
+//};
 
 REFL_AUTO(
     type(Wire),
     field(test_only),
-    field(connect_, Property<ValueParser>(&ParseConnection))
+    field(connect_)
 );
 

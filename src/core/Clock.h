@@ -56,18 +56,18 @@ public:
     }
 };
 
-ValueType ParseComponents(const std::string& valueStr) {
-    return ValueType(std::any(valueStr));
-};
+//ValueType ParseComponents(const std::string& valueStr) {
+    //return ValueType(std::any(valueStr));
+//};
 
-ValueType ParseChannels(const std::string& valueStr) {
-    return ValueType(std::any(valueStr));
-};
+//ValueType ParseChannels(const std::string& valueStr) {
+    //return ValueType(std::any(valueStr));
+//};
 
 REFL_AUTO(
     type(Clock),
     field(freq_),
-    field(components_, Property<ValueParser>(&ParseComponents)),
-    field(channels_, Property<ValueParser>(&ParseChannels))
+    field(components_),
+    field(channels_)
     )
 

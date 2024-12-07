@@ -1,6 +1,6 @@
 project('nose', 'cpp',
   version: '0.1.0',
-  default_options: ['warning_level=3', 'cpp_std=c++17', 'cpp_args=-Wno-return-type -Wno-return-type'])
+  default_options: ['warning_level=3', 'cpp_std=c++20', 'cpp_args=-Wno-return-type -Wno-return-type'])
 
 # 获取C++编译器
 cpp_compiler = meson.get_compiler('cpp')
@@ -28,6 +28,7 @@ doctest_inc = include_directories('external/doctest')
   #)
 #endif
 
+rfl_cpp_inc = include_directories('external/reflect-cpp/include')
 refl_cpp_inc = include_directories('external/refl-cpp/include')
 pybind11_inc = include_directories('external/pybind11/include')
 
@@ -37,7 +38,7 @@ python3_headers = dependency('python3', required : true)
 python3_lib = dependency('python3', required : true)
 
 
-all_includes = [src_inc, refl_cpp_inc, doctest_inc, pybind11_inc ]
+all_includes = [src_inc, rfl_cpp_inc, refl_cpp_inc, doctest_inc, pybind11_inc ]
 
 
 # 列出需要编译到动态库中的源文件

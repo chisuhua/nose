@@ -6,18 +6,21 @@
 #include <variant>
 #include <any>
 #include <refl.hpp>
+#include <rfl/json.hpp>
+#include <rfl.hpp>
 #include <sstream>
 #include <map>
 #include <vector>
 
 // 定义 ValueType 作为节点的属性值类型
-using ValueType = std::variant<nullptr_t, int, float, std::string, bool, double, uint64_t, std::any>;
+using ValueType = std::variant<nullptr_t, int, float, std::string, bool, double, uint64_t, rfl::Generic>;
 using ElementProperties = std::unordered_map<std::string, ValueType>;
 
 // 辅助模板判断类型
 template <typename T>
 struct always_false : std::false_type {};
 
+#if 0
 // 辅助结构体检测是否为容器类型
 template <typename T, typename _ = void>
 struct is_container : std::false_type {};
@@ -40,6 +43,7 @@ struct is_container<
             decltype(std::declval<T>().begin()),
             decltype(std::declval<T>().end())>,
         void>> : std::true_type {};
+#endif
 
 // 默认解析器
 namespace parser {
@@ -64,6 +68,7 @@ namespace parser {
     template <typename T>
     ValueType default_parser(const std::string& valueStr);
 
+#if 0
     template <typename Container>
     Container parseContainer(const std::string& valueStr) {
         Container container;
@@ -85,6 +90,7 @@ namespace parser {
         }
         return container;
     }
+#endif
 
     template <typename T>
     ValueType default_parser(const std::string& valueStr) {
@@ -100,10 +106,13 @@ namespace parser {
             return std::stod(valueStr);
         } else if constexpr (std::is_same_v<T, uint64_t>) {
             return std::stoul(valueStr);
-        } else if constexpr (is_container<T>::value) {
-            return ValueType(std::any(parseContainer<T>(valueStr)));
+        } else /*if constexpr (is_container<T>::value)*/ {
+            //return ValueType(std::any(parseContainer<T>(valueStr)));
+            return ValueType(rfl::json::read<rfl::Generic>(valueStr).value());
+            /*
         } else {
             static_assert(always_false<T>::value, "Unsupported type for default_parser, please use customer paser function");
+            */
         }
     }
 }

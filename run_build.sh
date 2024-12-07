@@ -2,7 +2,7 @@
 set -e
 # -*- coding: utf-8 -*-
 # 初次配置项目
-export CXX=g++-13
+export CXX=g++-11
 rm -rf builddir
 meson setup builddir
 #meson configure builddir

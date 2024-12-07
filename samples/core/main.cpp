@@ -14,7 +14,7 @@
 #include "ComponentBindVisitor.h"
 #include "ChannelBindVisitor.h"
 #include "PrinterVisitor.h"
-#include "Port.h"
+#include "IPort.h"
 #include "Event.h"
 #include "ComponentSrc.h"
 #include "ComponentDst.h"
@@ -23,7 +23,7 @@
     REGISTER_OBJECT(Channel)
     REGISTER_OBJECT(Clock)
 
-    using port = Port<bundle::ValidReady>;
+    using port = IPort; // Port<bundle::ValidReady>;
     REGISTER_OBJECT(port)
 
 int main() {

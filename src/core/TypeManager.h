@@ -12,7 +12,7 @@
 #include <refl.hpp>
 #include "String.h"
 #include "Property.h"
-#include "Port.h"
+#include "IPort.h"
 
 using KeyValueParser = ValueType(*)(const std::string&, const std::string&);
 using PropertiesSetter = void(*)(const std::shared_ptr<void>, ElementProperties&);
@@ -73,8 +73,8 @@ private:
                     member(*instanceT) = std::visit([&](auto&& arg) -> member_type {
                         if constexpr (std::is_same_v<member_type, decltype(arg)>) {
                             return arg;
-                        } else if constexpr (std::is_same_v<std::any, decltype(arg)>) {
-                            return std::any_cast<member_type>(arg);
+                        } else if constexpr (std::is_same_v<rfl::Generic, decltype(arg)>) {
+                            return rfl::from_generic<member_type>(arg).value();
                         } else {
                             throw std::runtime_error("Unsupported type conversion");
                         }
