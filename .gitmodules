@@ -10,3 +10,10 @@
 [submodule "external/reflect-cpp"]
 	path = external/reflect-cpp
 	url = https://github.com/getml/reflect-cpp.git
+
+[submodule "external/SystemC-Components"]
+	path = external/SystemC-Components
+	url = https://github.com/Minres/SystemC-Components.git
+[submodule "external/systemc"]
+	path = external/systemc
+	url = https://github.com/accellera-official/systemc.git
