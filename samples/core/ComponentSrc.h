@@ -2,6 +2,7 @@
 #include "Registry.h"
 #include "Component.h"
 #include "Event.h"
+#include "Payload.h"
 
 class ComponentSrc : public Component {
 public:

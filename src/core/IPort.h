@@ -5,11 +5,12 @@
 #include <string>
 #include <stdexcept>
 #include <Property.h>
+#include <Payload.h>
 #include <functional>
 #include <string_view>
 #include <refl.hpp>
+#include <string_view>
 
-class Trans;
 
 enum class Role {
     Master,
@@ -33,14 +34,14 @@ public:
             peer_ = other;
     }
 
-    IPort& operator << (Trans* t) {
+    IPort& operator << (PayloadPtr p) {
         auto& peer_data = peer_->trans_;
-        peer_data.push_back(t);
+        peer_data.push_back(p);
         //this->trans_.push(t);
         return *this;
     }
 
-    IPort& operator >> (Trans* t) {
+    IPort& operator >> (PayloadPtr t) {
         auto& peer_data = peer_->trans_;
         t = this->trans_.back();
         this->trans_.pop_back();
@@ -55,10 +56,10 @@ public:
     }
 
     SelfPtr getPeer() { return peer_; }
+    Role role;
 private:
     SelfPtr peer_;
-    std::vector<Trans*> trans_;
-    Role role;
+    std::vector<PayloadPtr> trans_;
     
 };
 

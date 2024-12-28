@@ -27,9 +27,35 @@ doctest_inc = include_directories('external/doctest')
     #source: ['external/doctest/doctest/parts/doctest.cpp']
   #)
 #endif
+# 检查是否存在 SYSTEMC_HOME 环境变量
+#systemc_dir = meson.get_env().get('SYSTEMC_HOME', '.')
+#使用 configuration_data 获取环境变量
+systemc_home_res = run_command('sh', '-c', 'echo $SYSTEMC_HOME')
+if systemc_home_res.returncode() != 0
+  error('Failed to get SYSTEMC_HOME environment variable.')
+endif
+
+systemc_dir = systemc_home_res.stdout().strip()
+
+# 添加 SystemC 的头文件路径
+systemc_inc = include_directories(systemc_dir + '/include')
+
+# 假设 SystemC 库位于 lib64 或 lib 目录下
+systemc_libdir = systemc_dir + '/lib' # 或者 '/lib64' 或 '/lib'
+
+# 查找并链接 SystemC 库
+systemc_dep = dependency('systemc', required : false)
+#if not systemc_dep.found()
+  #systemc_dep = declare_dependency(
+    #link_with : ['systemc'],
+    #include_directories : systemc_inc,
+    #link_args : ['-L' + systemc_libdir, '-Wl,-rpath,' + systemc_libdir]
+  #)
+#endif
 
 rfl_cpp_inc = include_directories('external/reflect-cpp/include')
 refl_cpp_inc = include_directories('external/refl-cpp/include')
+pybind11_inc = include_directories('external/pybind11/include')
 pybind11_inc = include_directories('external/pybind11/include')
 
 src_inc = include_directories('src/core', 'src/core/visitor', 'src/core/loader', 'src/utils', 'src/system', 'src/system/graph')
@@ -38,7 +64,7 @@ python3_headers = dependency('python3', required : true)
 python3_lib = dependency('python3', required : true)
 
 
-all_includes = [src_inc, rfl_cpp_inc, refl_cpp_inc, doctest_inc, pybind11_inc ]
+all_includes = [src_inc, rfl_cpp_inc, refl_cpp_inc, doctest_inc, pybind11_inc, systemc_inc]
 
 
 # 列出需要编译到动态库中的源文件
@@ -74,7 +100,7 @@ src_files = core_files + files(
 # 建立动态库
 libnose = shared_library('nose', core_files, install: true, include_directories: all_includes, dependencies : [python3_headers, python3_lib])
 
-link_dependencies = dependency('threads')
+link_dependencies = dependency('threads', 'systemc_dep')
 
 # 编译 main.cpp 作为 sample 可执行文件
 sample_executable = executable('sample', 'samples/core/main.cpp', include_directories: all_includes, link_with: libnose, 
