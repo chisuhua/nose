@@ -10,13 +10,6 @@
 [submodule "external/reflect-cpp"]
 	path = external/reflect-cpp
 	url = https://github.com/getml/reflect-cpp.git
-
-[submodule "external/SystemC-Components"]
-	path = external/SystemC-Components
-	url = https://github.com/chisuhua/SystemC-Components.git
-[submodule "external/systemc"]
-	path = external/systemc
-	url = https://github.com/accellera-official/systemc.git
 [submodule "sc_tools/icsc"]
 	path = sc_tools/icsc
 	url = git@github.com:chisuhua/systemc-compiler.git
