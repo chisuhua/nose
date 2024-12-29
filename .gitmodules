@@ -16,3 +16,6 @@
 [submodule "sc_tools/scc"]
 	path = sc_tools/scc
 	url = git@github.com:chisuhua/SystemC-Components.git
+[submodule "external/TaskRunner"]
+	path = external/TaskRunner
+	url = git@github.com:chisuhua/TaskRunner.git
