@@ -7,7 +7,7 @@ export CXX_STD=17
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") >/dev/null && pwd)
 
 export BUILD_DIR=${SCRIPT_DIR}/build
-export SCC_SRC_DIR=${SCRIPT_DIR}/external/SystemC-Components
+export SCC_SRC_DIR=${SCRIPT_DIR}/sc_tools/scc
 #export SYSTEMC_DIR=${SCRIPT_DIR}/external/systemc
 
 export SC_VERSION=2.3.4

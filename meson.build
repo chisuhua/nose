@@ -27,21 +27,34 @@ doctest_inc = include_directories('external/doctest')
     #source: ['external/doctest/doctest/parts/doctest.cpp']
   #)
 #endif
-# 检查是否存在 SYSTEMC_HOME 环境变量
-#systemc_dir = meson.get_env().get('SYSTEMC_HOME', '.')
-#使用 configuration_data 获取环境变量
-systemc_home_res = run_command('sh', '-c', 'echo $SYSTEMC_HOME')
+
+# 获取 SYSTEMC_HOME 环境变量
+#systemc_home = meson.get_env().get('SYSTEMC_HOME', 'sc_tools')
+#if systemc_home == 'sc_tools'
+  #message('Warning: SYSTEMC_HOME not set, using default path.')
+#endif
+
+systemc_home_res = run_command('sh', '-c', 'echo $SYSTEMC_HOME', check : true)
 if systemc_home_res.returncode() != 0
   error('Failed to get SYSTEMC_HOME environment variable.')
 endif
+systemc_home = systemc_home_res.stdout().strip()
 
-systemc_dir = systemc_home_res.stdout().strip()
+# 确保 SYSTEMC_HOME 不是指向源树内部的路径
+src_dir = meson.source_root()
+if systemc_home.startswith(src_dir)
+  systemc_home = 'sc_tools'
+  #systemc_home = systemc_home[len(src_dir):].lstrip('/')
+  #systemc_home = meson.path.relpath(systemc_home, base: src_dir)
+  #systemc_home = meson.relpath(systemc_home, src_dir)
+  #error('SYSTEMC_HOME should not point to a directory inside the source tree.')
+endif
 
 # 添加 SystemC 的头文件路径
-systemc_inc = include_directories(systemc_dir + '/include')
+systemc_inc = include_directories(join_paths(systemc_home, 'include'))
 
 # 假设 SystemC 库位于 lib64 或 lib 目录下
-systemc_libdir = systemc_dir + '/lib' # 或者 '/lib64' 或 '/lib'
+systemc_libdir = join_paths(systemc_home, 'lib') # 或者 '/lib64' 或 '/lib'
 
 # 查找并链接 SystemC 库
 systemc_dep = dependency('systemc', required : false)
@@ -55,7 +68,6 @@ systemc_dep = dependency('systemc', required : false)
 
 rfl_cpp_inc = include_directories('external/reflect-cpp/include')
 refl_cpp_inc = include_directories('external/refl-cpp/include')
-pybind11_inc = include_directories('external/pybind11/include')
 pybind11_inc = include_directories('external/pybind11/include')
 
 src_inc = include_directories('src/core', 'src/core/visitor', 'src/core/loader', 'src/utils', 'src/system', 'src/system/graph')

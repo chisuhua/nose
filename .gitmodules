@@ -3,7 +3,7 @@
 	url = https://github.com/onqtam/doctest.git
 [submodule "external/refl-cpp"]
 	path = external/refl-cpp
-	url = https://github.com/veselink1/refl-cpp
+	url = git@github.com:chisuhua/refl-cpp.git
 [submodule "external/pybind11"]
 	path = external/pybind11
 	url = https://github.com/pybind/pybind11
