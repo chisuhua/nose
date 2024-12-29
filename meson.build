@@ -36,7 +36,8 @@ doctest_inc = include_directories('external/doctest')
 
 systemc_home_res = run_command('sh', '-c', 'echo $SYSTEMC_HOME', check : true)
 if systemc_home_res.returncode() != 0
-  error('Failed to get SYSTEMC_HOME environment variable.')
+  systemc_home_res = 'sc_tools'
+  #error('Failed to get SYSTEMC_HOME environment variable.')
 endif
 systemc_home = systemc_home_res.stdout().strip()
 
