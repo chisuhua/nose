@@ -10,3 +10,6 @@
 [submodule "external/reflect-cpp"]
 	path = external/reflect-cpp
 	url = https://github.com/getml/reflect-cpp.git
+[submodule "external/cpputils"]
+	path = external/cpputils
+	url = git@github.com:chisuhua/cpputils.git
