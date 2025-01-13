@@ -1,70 +1,110 @@
-#pragma once
-#include <memory>
-#include <functional>
-#include <memory>
-#include <string>
-#include <stdexcept>
-#include <Property.h>
-#include <Payload.h>
-#include <functional>
-#include <string_view>
-#include <refl.hpp>
-#include <string_view>
+#ifndef IPORT_H
+#define IPORT_H
 
+#include <any>
+#include <queue>
+#include <memory>
 
-enum class Role {
-    Master,
-    Slave,
-};
+enum class PortRole { Master, Slave };
 
 class IPort {
-    using SelfPtr = std::shared_ptr<IPort>;
 public:
-    IPort() : peer_(nullptr) {}
+    virtual ~IPort() = default;
 
-    IPort(const IPort& _other): role(_other.role)
-    {}
+    // 绑定到另一个端口，并设置角色
+    virtual void bind(IPort* peer, PortRole role) = 0;
 
-    ~IPort() = default;
-
-    Role getRole() { return role; }
-    void setRole(Role role_) { role = role_; }
-
-    void bind(SelfPtr other) {
-            peer_ = other;
+    // 模板函数：发送数据
+    template <typename T>
+    void send(const T& data) {
+        sendData(std::any(data));
     }
 
-    IPort& operator << (PayloadPtr p) {
-        auto& peer_data = peer_->trans_;
-        peer_data.push_back(p);
-        //this->trans_.push(t);
-        return *this;
+    // 模板函数：接收数据
+    template <typename T>
+    T receive() {
+        if (hasData()) {
+            T data = std::any_cast<T>(receiveData());
+            return data;
+        }
+        throw std::runtime_error("No data available to receive");
     }
 
-    IPort& operator >> (PayloadPtr t) {
-        auto& peer_data = peer_->trans_;
-        t = this->trans_.back();
-        this->trans_.pop_back();
-        return *this;
-    }
+    // 检查是否有数据可以接收
+    virtual bool hasData() const = 0;
 
-    std::shared_ptr<IPort> clone() const {
-        auto clonedPort = std::make_shared<IPort>();
-        clonedPort->peer_ = this->peer_;
-        clonedPort->role = this->role;
-        return clonedPort;
-    }
+    // 克隆函数
+    virtual std::unique_ptr<IPort> clone() const = 0;
 
-    SelfPtr getPeer() { return peer_; }
-    Role role;
-private:
-    SelfPtr peer_;
-    std::vector<PayloadPtr> trans_;
-    
+//protected:
+    // 存储数据的虚函数
+    virtual void sendData(const std::any& data) = 0;
+
+    // 获取数据的虚函数
+    virtual std::any receiveData() = 0;
+
+    // 检查是否有数据的虚函数
+    virtual bool hasDataImpl() const = 0;
 };
 
+// 具体实现
+class Port : public IPort {
+private:
+    IPort* peer_ = nullptr;
+    PortRole role_ = PortRole::Master;
+    std::queue<std::any> dataQueue_;
+
+public:
+    // 绑定到另一个端口，并设置角色
+    void bind(IPort* peer, PortRole role) override {
+        peer_ = peer;
+        role_ = role;
+    }
+
+    // 克隆函数
+    std::unique_ptr<IPort> clone() const override {
+        return std::make_unique<Port>(*this);
+    }
+
+    // 检查是否有数据可以接收
+    bool hasData() const override {
+        return hasDataImpl();
+    }
+
+//protected:
+    // 存储数据
+    void sendData(const std::any& data) override {
+        if (peer_ && role_ == PortRole::Master) {
+            peer_->sendData(data);
+        } else {
+            dataQueue_.push(data);
+        }
+    }
+
+    // 获取数据
+    std::any receiveData() override {
+        if (peer_ && role_ == PortRole::Slave) {
+            if (peer_->hasData()) {
+                return peer_->receiveData();
+            }
+        } else if (!dataQueue_.empty()) {
+            std::any data = dataQueue_.front();
+            dataQueue_.pop();
+            return data;
+        }
+        throw std::runtime_error("No data available to receive");
+    }
+
+    // 检查是否有数据的虚函数
+    bool hasDataImpl() const override {
+        return !dataQueue_.empty();
+    }
+};
+
+
 REFL_AUTO(
-    type(IPort),
-    field(role)
+    type(Port, bases<IPort>),
+    field(role_)
     )
 
+#endif // IPORT_H
