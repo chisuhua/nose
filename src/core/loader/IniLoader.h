@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include "Tree.h"
 #include "TypeManager.h"
-#include "String.h"
+#include "StringIntern.h"
 #include "PathUtils.h"
 
 class IniLoader {

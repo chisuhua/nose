@@ -1,5 +1,5 @@
 #pragma once
-#include "IPort.h"
+#include "Port.h"
 #include "Bundle.h"
 
 struct Event {
@@ -14,10 +14,10 @@ struct RSP  {
 namespace bundle {
     struct ValidReady : public Bundle<ValidReady, Event, RSP> {
         template <typename T>
-        Role getRole() { return Role::Master; }
+        PortRole getRole() { return PortRole::Master; }
     };
 
     template <>
-    Role ValidReady::getRole<RSP>() { return Role::Slave; };
+    PortRole ValidReady::getRole<RSP>() { return PortRole::Slave; };
 
 }

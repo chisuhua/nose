@@ -11,7 +11,7 @@ public:
             for (const auto& [key, childEntity] : entity.getChildren()) {
                 auto port_entity = childEntity->getObject("Port");
                 if (port_entity) {
-                    component->addPort(key, std::static_pointer_cast<IPort>(port_entity));
+                    component->addPort(key, std::static_pointer_cast<Port>(port_entity));
 
                     //if (port->role == Role::Slave) {
                         //auto portNotify = [component, key]() {

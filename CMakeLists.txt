@@ -24,6 +24,8 @@ if(NOT doctest_FOUND)
   target_sources(doctest INTERFACE external/doctest/doctest/parts/doctest.cpp)
 endif()
 
+add_subdirectory(external/reflect-cpp) # Add this project as a subdirectory
+
 # 添加其他头文件路径
 include_directories(
   external/reflect-cpp/include
@@ -42,7 +44,7 @@ include_directories(
 # 列出需要编译到动态库中的源文件
 set(core_files
   src/core/TypeManager.h
-  src/core/IPort.h
+  src/core/Port.h
   src/core/Bundle.h
   src/core/Wire.h
   src/core/Channel.h
@@ -63,7 +65,7 @@ set(core_files
 
 set(src_files
   ${core_files}
-  src/core/Registry.cpp
+  #src/core/Registry.cpp
 )
 
 # 建立动态库
@@ -72,7 +74,7 @@ target_include_directories(nose PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # 编译 main.cpp 作为 sample 可执行文件
 add_executable(sample samples/core/main.cpp)
-target_link_libraries(sample PRIVATE nose )
+target_link_libraries(sample PRIVATE nose reflectcpp)
 
 # 编译和运行测试用例
 option(BUILD_DOCTEST "Build with doctest support" ON)
@@ -82,7 +84,7 @@ if(BUILD_DOCTEST)
   )
 
   add_executable(tests ${test_files})
-  target_link_libraries(tests PRIVATE nose)
+  target_link_libraries(tests PRIVATE nose reflectcpp)
   add_test(NAME test_basic COMMAND tests)
 endif()
 

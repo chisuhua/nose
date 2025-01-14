@@ -77,8 +77,8 @@ struct Bundle : public Mixin<Types...> {
     }
     
     template<typename T>
-    Role getRole() {
-        return Role::Master;
+    PortRole getRole() {
+        return PortRole::Master;
     }
 };
 

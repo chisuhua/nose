@@ -10,9 +10,9 @@
 #include <type_traits>
 #include <typeinfo>
 #include <refl.hpp>
-#include "String.h"
+#include "StringIntern.h"
 #include "Property.h"
-#include "IPort.h"
+#include "Port.h"
 
 using KeyValueParser = ValueType(*)(const std::string&, const std::string&);
 using PropertiesSetter = void(*)(const std::shared_ptr<void>, ElementProperties&);

@@ -2,7 +2,6 @@
 #include "Registry.h"
 #include "Component.h"
 #include "Event.h"
-#include "Payload.h"
 
 class ComponentSrc : public Component {
 public:
@@ -10,9 +9,9 @@ public:
 
     void sendEvent(const Event& event, const std::string& portName) {
         //auto port = std::dynamic_pointer_cast<Port<bundle::ValidReady>>(getPort(portName));
-        auto port = std::dynamic_pointer_cast<IPort>(getPort(portName));
+        auto port = std::dynamic_pointer_cast<Port>(getPort(portName));
         if (port) {
-            *port << event;
+            port->send(event);
             std::cout << "ComponentSrc sending event: data = " << event.data << ", valid = " << event.valid << std::endl;
         }
     }

@@ -1,77 +1,125 @@
-#pragma once
-#include <tuple>
-#include <string>
+//#include <tuple>
+//#include <string>
+//#include <memory>
+//#include <numeric> 
+//#include <typeindex>
+//#include <array>
+//#include <algorithm>
+//#include <functional>
+//#include <type_traits>
+//#include <cassert>
+//#include <refl.hpp>
+
+#ifndef PORT_H
+#define PORT_H
+
+#include <any>
+#include <queue>
 #include <memory>
-#include <numeric> 
-#include <typeindex>
-#include <array>
-#include <algorithm>
 #include <functional>
-#include <type_traits>
-#include <cassert>
-#include <refl.hpp>
-#include "IPort.h"
+#include <stdexcept>
 
+enum class PortRole { Master, Slave };
 
-template<typename Bundle>
-class Port : public IPort, public std::enable_shared_from_this<Port<Bundle>>
-{
-    using Self = Port<Bundle>;
-    using SelfPtr = std::shared_ptr<Self>;
+class Port {
 public:
-    Port() :peer_(nullptr) {};
+    // 构造函数
+    Port() = default;
+    explicit Port(PortRole role) : role_(role) {}
 
-    //const Bundle& getIO() const {
-        //return io_;
-    //}
+    // 绑定到另一个端口
+    void bind(Port* peer) {
+        peer_ = peer;
+    }
 
-    //std::any getIO() override {
-        //return io_;
-    //}
+    // 设置角色
+    void setRole(PortRole role) {
+        role_ = role;
+    }
 
-    void bind(std::shared_ptr<IPort> other) override {
-        auto derived_other = std::dynamic_pointer_cast<Port<Bundle>>(other);
-        if (derived_other) {
-            peer_ = derived_other;
-        } else {
-            throw std::invalid_argument("Incompatible port types for binding");
+    // 获取角色
+    PortRole getRole() const {
+        return role_;
+    }
+
+    // 模板函数：发送数据
+    template <typename T>
+    void send(const T& data) {
+        sendData(std::any(data));
+    }
+
+    // 模板函数：接收数据
+    template <typename T>
+    T receive() {
+        if (hasData()) {
+            T data = std::any_cast<T>(receiveData());
+            return data;
+        }
+        throw std::runtime_error("No data available to receive");
+    }
+
+    // 检查是否有数据可以接收
+    bool hasData() const {
+        return !dataQueue_.empty();
+    }
+
+    // 克隆函数
+    std::unique_ptr<Port> clone() const {
+        return std::make_unique<Port>(*this);
+    }
+
+    // 添加观察者
+    void addObserver(std::function<void()> observer) {
+        observers_.push_back(observer);
+    }
+
+    // 通知观察者
+    void notifyObservers() {
+        for (const auto& observer : observers_) {
+            observer();
         }
     }
 
-    std::shared_ptr<IPort> clone() const override {
-        auto clonedPort = std::make_shared<Port<Bundle>>();
-        clonedPort->data_ = this->data_;
-        clonedPort->role = this->role;
-        return clonedPort;
-    }
-
-    void set_data(const Bundle data) { data_ = data; }
-    const Bundle& get_data() const { return data_; }
-
-    template<typename T>
-    Port<Bundle>& operator<<(const T& field_value) {
-        auto& peer_data = peer_->data_;
-        if ((getPortRole() == Role::Master)) {
-            assert(peer_data.template getRole<T>() == Role::Slave);
+    // 存储数据
+    void sendData(const std::any& data) {
+        if (peer_ && role_ == PortRole::Master) {
+            peer_->sendData(data);
         } else {
-            assert(peer_data.template getRole<T>() == Role::Master);
+            dataQueue_.push(data);
         }
-        peer_data.template set(field_value);
-        this->data_.template set(field_value);
-        return *this;
     }
 
-    template<typename T>
-    Port<Bundle>& operator >> (T& field_value) {
-        auto& peer_data = peer_->data_;
-        if ((getPortRole() == Role::Master)) {
-            assert(peer_data.template getRole<T>() == Role::Slave);
-        } else {
-            assert(peer_data.template getRole<T>() == Role::Master);
+    // 获取数据
+    std::any receiveData() {
+        if (peer_ && role_ == PortRole::Slave) {
+            if (peer_->hasData()) {
+                return peer_->receiveData();
+            }
+        } else if (!dataQueue_.empty()) {
+            std::any data = dataQueue_.front();
+            dataQueue_.pop();
+            return data;
         }
-        field_value = this->data_.template get<T>();
-        return *this;
+        throw std::runtime_error("No data available to receive");
     }
+
+    // 对端指针
+    Port* peer_ = nullptr;
+
+    // 角色
+    PortRole role_ = PortRole::Master;
+
+    // 数据队列
+    std::queue<std::any> dataQueue_;
+
+    // 观察者列表
+    std::vector<std::function<void()>> observers_;
+
+    //Port(const Port&) = delete;
+    //Port& operator=(const Port&) = delete;
+};
+
+
 
 
     // 添加 << 操作符用于send data to port
@@ -126,12 +174,11 @@ public:
         //return *this;
     //}
 
-    SelfPtr getPeer() { return peer_; }
-private:
-    Bundle data_;
-    SelfPtr peer_;
-};
 
 REFL_AUTO(
-        template((typename T), (Port<T>), bases<IPort>)
-        );
+    type(Port),
+    field(role_)
+    )
+
+
+#endif // PORT_H

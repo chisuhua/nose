@@ -83,7 +83,6 @@ all_includes = [src_inc, rfl_cpp_inc, refl_cpp_inc, doctest_inc, pybind11_inc, s
 # 列出需要编译到动态库中的源文件
 core_files = files(
   'src/core/TypeManager.h',
-  'src/core/IPort.h',
   'src/core/Port.h',
   'src/core/Bundle.h',
   'src/core/Wire.h',

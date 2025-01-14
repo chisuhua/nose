@@ -1,7 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest/doctest.h"
 #include "../src/core/TypeManager.h"
-#include "../src/core/IPort.h"
+#include "../src/core/Port.h"
 #include "../src/core/Wire.h"
 #include "../src/core/Channel.h"
 #include "../src/core/Clock.h"

@@ -14,7 +14,7 @@
 #include "ComponentBindVisitor.h"
 #include "ChannelBindVisitor.h"
 #include "PrinterVisitor.h"
-#include "IPort.h"
+#include "Port.h"
 #include "Event.h"
 #include "ComponentSrc.h"
 #include "ComponentDst.h"
@@ -23,8 +23,7 @@
     REGISTER_OBJECT(Channel)
     REGISTER_OBJECT(Clock)
 
-    using port = IPort; // Port<bundle::ValidReady>;
-    REGISTER_OBJECT(port)
+    REGISTER_OBJECT(Port)
 
 int main() {
     TypeManager& typeManager = TypeManager::instance();
@@ -62,9 +61,11 @@ int main() {
 
         std::future<void> future = std::async(std::launch::async, [&, dstUnit1] {
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            auto dstPort = std::dynamic_pointer_cast<Port<bundle::ValidReady>>(dstUnit1->getPort("port1"));
-            Event io;
-            *dstPort >> io;
+            // auto dstPort = std::dynamic_pointer_cast<Port<bundle::ValidReady>>(dstUnit1->getPort("port1"));
+            auto dstPort = std::dynamic_pointer_cast<Port>(dstUnit1->getPort("port1"));
+            //Event io;
+            //*dstPort >> io;
+            Event io = dstPort->receive<Event>();
             std::cout << "ComponentDst received event: data = " << io.data << ", valid = " << io.valid << std::endl;
         });
 
