@@ -8,7 +8,6 @@
 //#include <functional>
 //#include <type_traits>
 //#include <cassert>
-//#include <refl.hpp>
 
 #ifndef PORT_H
 #define PORT_H
@@ -18,6 +17,7 @@
 #include <memory>
 #include <functional>
 #include <stdexcept>
+#include <refl.hpp>
 
 enum class PortRole { Master, Slave };
 

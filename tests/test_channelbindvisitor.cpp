@@ -1,3 +1,4 @@
+#include "doctest/doctest.h"
 #include "ChannelBindVisitor.h"
 #include <iostream>
 

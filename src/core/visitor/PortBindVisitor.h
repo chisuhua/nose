@@ -1,6 +1,7 @@
 #pragma once
 #include "Visitor.h"
 #include "Tree.h"
+#include "Wire.h"
 
 class PortBindVisitor : public Visitor<void> {
 public:

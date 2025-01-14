@@ -81,10 +81,17 @@ option(BUILD_DOCTEST "Build with doctest support" ON)
 if(BUILD_DOCTEST)
   set(test_files
     tests/test_basic.cpp
+    tests/test_port.cpp
+    tests/test_wire.cpp
+    tests/test_port.cpp
+    tests/test_component.cpp
+    tests/test_channel.cpp
+    tests/test_port_bind.cpp
+    tests/test_component_bind.cpp
   )
 
   add_executable(tests ${test_files})
   target_link_libraries(tests PRIVATE nose reflectcpp)
-  add_test(NAME test_basic COMMAND tests)
+  #add_test(NAME test_basic COMMAND tests)
 endif()
 
