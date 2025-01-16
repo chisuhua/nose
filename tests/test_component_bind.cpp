@@ -13,6 +13,8 @@ TEST_CASE("ComponentBindVisitor functionality") {
     auto port2 = std::make_shared<Port>(PortRole::Slave);
     component1->addPort("port1", port1);
     component1->addPort("port2", port2);
+    port1->bind(port2.get());
+
     entity1->setObject("Component", component1);
     tree.setCurrent(entity1);
 

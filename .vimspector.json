@@ -1,0 +1,54 @@
+{
+  "configurations": {
+    "cpp: launch": {
+      "adapter": "vscode-cpptools",
+      "configuration": {
+        "name": "sample",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/build/sample",
+        "args": [],
+        "stopAtEntry": true,
+        "cwd": "${workspaceRoot}",
+        "targetArchitecture": "arm64",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb",
+        "lgging" : {
+          "engineLogging": true
+        },
+        "breakpoints": {
+          "exception": {
+            "cpp_throw": "Y",
+            "cpp_catch": "N"
+          }
+        }
+      }
+    },
+    "cpp: test": {
+      "adapter": "vscode-cpptools",
+      "configuration": {
+        "name": "test",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/build/tests",
+        "args": ["-tc=*Prop*"],
+        "stopAtEntry": true,
+        "cwd": "${workspaceRoot}",
+        "targetArchitecture": "arm64",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb",
+        "lgging" : {
+          "engineLogging": true
+        },
+        "breakpoints": {
+          "exception": {
+            "cpp_throw": "Y",
+            "cpp_catch": "N"
+          }
+        }
+      }
+    }
+  }
+}

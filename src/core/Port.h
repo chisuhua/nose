@@ -1,14 +1,3 @@
-//#include <tuple>
-//#include <string>
-//#include <memory>
-//#include <numeric> 
-//#include <typeindex>
-//#include <array>
-//#include <algorithm>
-//#include <functional>
-//#include <type_traits>
-//#include <cassert>
-
 #ifndef PORT_H
 #define PORT_H
 
@@ -18,6 +7,7 @@
 #include <functional>
 #include <stdexcept>
 #include <refl.hpp>
+#include "Property.h"
 
 enum class PortRole { Master, Slave };
 
@@ -30,6 +20,7 @@ public:
     // 绑定到另一个端口
     void bind(Port* peer) {
         peer_ = peer;
+        peer->peer_ = this;
     }
 
     // 设置角色
@@ -42,10 +33,11 @@ public:
         return role_;
     }
 
-    // 模板函数：发送数据
     template <typename T>
     void send(const T& data) {
-        sendData(std::any(data));
+        assert(peer_);
+        //if (peer_ && role_ == PortRole::Master) {
+        peer_->sendData(std::any(data));
     }
 
     // 模板函数：接收数据
@@ -82,20 +74,12 @@ public:
 
     // 存储数据
     void sendData(const std::any& data) {
-        if (peer_ && role_ == PortRole::Master) {
-            peer_->sendData(data);
-        } else {
-            dataQueue_.push(data);
-        }
+        dataQueue_.push(data);
     }
 
     // 获取数据
     std::any receiveData() {
-        if (peer_ && role_ == PortRole::Slave) {
-            if (peer_->hasData()) {
-                return peer_->receiveData();
-            }
-        } else if (!dataQueue_.empty()) {
+        if (!dataQueue_.empty()) {
             std::any data = dataQueue_.front();
             dataQueue_.pop();
             return data;
@@ -177,7 +161,7 @@ public:
 
 REFL_AUTO(
     type(Port),
-    field(role_)
+    field(role_, Property())
     )
 
 

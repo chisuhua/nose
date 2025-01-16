@@ -32,7 +32,7 @@ int main() {
     IniLoader loader(typeManager);
 
     try {
-        loader.load("config.ini", tree);
+        loader.load("samples/core/config.ini", tree);
 
         ObjectBuildVisitor builderVisitor(typeManager, Registry::getInstance());
         tree.accept(builderVisitor);

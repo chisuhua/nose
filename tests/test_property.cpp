@@ -1,18 +1,18 @@
+#include "doctest/doctest.h"
 #include <iostream>
 #include <string>
 #include <variant>
 #include <unordered_map>
 #include <memory>
-#include <regex>
-#include <any>
 #include <functional>
-#include <stdexcept>
-#include <typeindex>
 #include <refl.hpp>
-
-// Property 模板结构定义略
-
-// 默认解析器定义略
+#include "IniLoader.h"
+#include "Property.h"
+#include "Tree.h"
+#include "Visitor.h"
+#include "Registry.h"
+#include "ObjectBuildVisitor.h"
+#include "PrinterVisitor.h"
 
 // Simple enum and its parsing function
 enum class Orientation {
@@ -38,83 +38,24 @@ public:
     std::string strval;
     Orientation orientation;
 
-    // Reflexion macro
-    REFL_AUTO(
-        type(CustomObject),
-        field(intval, Property()),
-        field(floatval, Property()),
-        field(strval, Property(&parse_custom)),
-        field(orientation, Property(PropertyType::Required, &parse_orientation))
-    )
 };
+// Reflexion macro
+REFL_AUTO(
+    type(CustomObject),
+    field(intval, Property()),
+    field(floatval, Property()),
+    field(strval, Property(&parse_custom)),
+    field(orientation, Property(PropertyType::Required, &parse_orientation))
+)
 
-// TypeManager 类定义略
-
-// Node 类定义略
-
-// Tree 类定义略
-
-// PathUtils 类定义略
-
-// IniLoader 类定义略
-
-class PrinterVisitor : public Visitor {
+class SummationVisitor : public Visitor<void> {
 public:
-    void visit(Node& node) override {
-        if (node.getType() == Node::NodeType::LEAF) {
-            visitLeaf(node);
-        } else {
-            visitDirectory(node);
-        }
-    }
-
-    void visitDirectory(Node& node) override {
-        printNode(node, 0);
-    }
-
-    void visitLeaf(Node& node) override {
-        printNode(node, 0);
-    }
-
-private:
-    void printNode(Node& node, int level) {
-        std::string indent(level * 2, ' ');
-        std::cout << indent << node.getName() << "\n";
-
-        for (const auto& child : node.getChildren()) {
-            if (child.second->getType() == Node::NodeType::LEAF) {
-                printNode(*child.second, level + 1);
-            } else {
-                printNode(*child.second, level + 1);
-            }
-        }
-    }
-};
-
-class SummationVisitor : public Visitor {
-public:
-    void visit(Node& node) override {
-        if (node.getType() == Node::NodeType::LEAF) {
-            visitLeaf(node);
-        } else {
-            visitDirectory(node);
-        }
-    }
-
-    void visitDirectory(Node& node) override {
-        for (const auto& child : node.getChildren()) {
-            child.second->accept(*this);
-        }
-    }
-
-    void visitLeaf(Node& node) override {
-        auto instance = node.getObject();
-        if (instance) {
+    virtual void visitObject(const std::shared_ptr<void>& obj, const std::string& key) override {
+        auto custom_object = std::static_pointer_cast<CustomObject>(obj);
+        if (custom_object) {
             // 实现求和逻辑
-            if (std::shared_ptr<CustomObject> obj = std::dynamic_pointer_cast<CustomObject>(instance)) {
-                totalSum_ += obj->intval;
-                totalSum_ += static_cast<int>(obj->floatval); // 这里粗略求和
-            }
+            totalSum_ += custom_object->intval;
+            totalSum_ += static_cast<int>(custom_object->floatval); // 这里粗略求和
         }
     }
 
@@ -126,27 +67,44 @@ private:
     int totalSum_ = 0;
 };
 
-int main() {
+REGISTER_OBJECT(CustomObject)
+
+TEST_CASE("Basic Property") {
     // 创建 TypeManager 实例并注册 CustomObject
     TypeManager& typeManager = TypeManager::instance();
-    typeManager.registerType<CustomObject>("CustomObject");
+    //typeManager.registerType<CustomObject>("CustomObject");
 
     // 创建 Tree 实例并加载配置
     Tree tree;
     IniLoader loader(typeManager);
 
     try {
-        loader.load("config.ini", tree);
+        loader.load("tests/config.ini", tree);
 
         // 使用 ObjectBuilderVisitor 创建对象
-        ObjectBuilderVisitor builderVisitor(typeManager);
+        ObjectBuildVisitor builderVisitor(typeManager, Registry::getInstance());
         tree.accept(builderVisitor);
 
-        // 使用 PrinterVisitor 打印树结构
+      // 使用 PrinterVisitor 打印树结构
         PrinterVisitor printerVisitor;
         tree.accept(printerVisitor);
 
-        // 使用 SummationVisitor 求和
+        auto entity = tree.findEntity("a/b");
+        CHECK(entity != nullptr);
+
+        auto obj1 = std::static_pointer_cast<CustomObject>(entity->getObject(entity->getName()));
+        CHECK(obj1 != nullptr);
+
+        auto obj2 = std::static_pointer_cast<CustomObject>(entity->getChild("c")->getObject("CustomObject"));
+
+        CHECK(obj2 != nullptr);
+
+        CHECK(obj1->intval == 10);
+        CHECK(obj2->intval == 30);
+
+        std::cout << obj1->strval << " " << obj2->strval << "\n";
+
+          // 使用 SummationVisitor 求和
         SummationVisitor summationVisitor;
         tree.accept(summationVisitor);
         std::cout << "Total Sum: " << summationVisitor.getTotalSum() << std::endl;

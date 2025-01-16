@@ -88,6 +88,7 @@ if(BUILD_DOCTEST)
     tests/test_channel.cpp
     tests/test_port_bind.cpp
     tests/test_component_bind.cpp
+    tests/test_property.cpp
   )
 
   add_executable(tests ${test_files})

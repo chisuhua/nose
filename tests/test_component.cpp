@@ -13,6 +13,7 @@ TEST_CASE("Component functionality") {
     component.addPort("port1", port1);
     component.addPort("port2", port2);
 
+    port1->bind(port2.get());
     // 模拟端口变化
     port1->send(42);
     port2->send(std::string("Hello, World!"));
@@ -28,8 +29,6 @@ TEST_CASE("Component functionality") {
     CHECK(component.portsUpdated_["port1"] == true);
     CHECK(component.portsUpdated_["port2"] == true);
 
-    // 检查端口数据
-    port1->bind(port2.get());
 
     port1->send(42);
     CHECK(port2->hasData());

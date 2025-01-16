@@ -13,7 +13,7 @@
 #include <vector>
 
 // 定义 ValueType 作为节点的属性值类型
-using ValueType = std::variant<nullptr_t, int, float, std::string, bool, double, uint64_t, rfl::Generic>;
+using ValueType = std::variant<nullptr_t, int, float, std::string, bool, double, uint64_t, rfl::Generic, std::any>;
 using ElementProperties = std::unordered_map<std::string, ValueType>;
 
 // 辅助模板判断类型
