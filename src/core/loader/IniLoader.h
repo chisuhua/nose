@@ -1,8 +1,6 @@
-#pragma once
-#include <regex>
-#include <sstream>
+#ifndef INILOADER_H
+#define INILOADER_H
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 #include "Tree.h"
 #include "TypeManager.h"
@@ -48,40 +46,57 @@ public:
         file.close();
     }
 
-    std::shared_ptr<Entity> createPath(Tree &tree, const std::string &path, const std::string &value_str = "") {
+    EntityRef createPath(Tree &tree, const std::string &path, const std::string &value_str = "") {
         auto parts = PathUtils::split(path);
         auto current_entity = (path.front() == '/') ? tree.getRoot() : tree.getCurrent();
-        std::string type_name;
-        bool is_current_object = false;
-        bool is_parent_object = false;
+        StringRef current_type_name;
+        StringRef parent_type_name;
+        bool is_current_object = current_entity.isSelfObject();
+        bool is_parent_object;
+
 
         for (size_t i = 0; i < parts.size(); ++i) {
             is_parent_object = is_current_object;
+            if (is_current_object) { parent_type_name = current_entity.getSelfTypeName(); }
             auto part = parts[i];
             auto pos = part.find(':');
             if (pos != std::string::npos) {
-                type_name = PathUtils::parseTypeName(part.substr(pos + 1));
+                current_type_name = PathUtils::parseTypeName(part.substr(pos + 1));
                 part = part.substr(0, pos);
                 is_current_object = true;
             } else {
                 is_current_object = false;
             }
 
-            if ((i < (parts.size() - 1)) or value_str == "") {
-                auto child = current_entity->getChild(part);
+            if (i == parts.size() - 1 && !value_str.empty()) {
+                if (is_current_object) {
+                    // person_a:Person = {...} , the entity_leaf node is object self
+                    auto child = current_entity.getChild(part);
+                    assert(not child.isValid());
+                    child = EntityRef(part, current_entity);
+                    child.setSelfTypeName(current_type_name);
+                    child.setSerialize(current_type_name, value_str);
+                    child.deserialize(current_type_name);
+                    current_entity.addChild(child);
+                } else if (is_parent_object) {
+                    // person = {...} , parse object member 
+                    ValueType value = typeManager_.parsePropertyValue(parent_type_name, part, value_str);
+                    current_entity.setProperty(parent_type_name, part, value);
+                }
+            } else {
+                auto child = current_entity.getChild(part);
                 if (!child) {
-                    child = std::make_shared<Entity>(part);
-                    current_entity->addChild(child);
+                    child = EntityRef(part, current_entity);
+                    if (is_current_object) {
+                        child.setSelfTypeName(current_type_name);
+                        child.setSerialize(current_type_name, value_str);
+                        child.deserialize(current_type_name);
+                    }
+                    current_entity.addChild(child);
                 }
                 current_entity = child;
             }
 
-            if (i == (parts.size() - 1)) {
-                if (is_parent_object and value_str != "") {
-                    ValueType value = typeManager_.parsePropertyValue(type_name, part, value_str);
-                    current_entity->setProperty(type_name, part, value);
-                }
-            }
         }
         return current_entity;
     }
@@ -96,7 +111,7 @@ private:
         return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
     }
 
-    //std::any parseValueIfNeeded(std::shared_ptr<Entity> current_entity, const std::string& memberName, const std::string& value) {
+    //std::any parseValueIfNeeded(EntityRef current_entity, const std::string& memberName, const std::string& value) {
         //// 遍历 TypeManager 中注册的所有类型，处理 :<Type> 的值
         //auto registeredTypes = typeManager_.getTypeConstructors();
 
@@ -158,3 +173,4 @@ private:
 
 };
 
+#endif

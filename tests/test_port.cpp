@@ -1,14 +1,28 @@
 #include "doctest/doctest.h"
+#include "EntityIntern.h"
 #include "Port.h"
-#include <iostream>
 
 TEST_CASE("Port functionality") {
     // 创建两个 Port 实例
-    auto port1 = std::make_shared<Port>(PortRole::Master);
-    auto port2 = std::make_shared<Port>(PortRole::Slave);
+    EntityRef entity_port1("port1");
+    EntityRef entity_port2("port2");
+
+    Port::GenericType port1_generic;
+    Port::GenericType port2_generic;
+
+    auto generic_obj1 = rfl::to_generic(port1_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
+    auto generic_obj2 = rfl::to_generic(port2_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
+                                                       //
+    auto port1 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj1));
+    auto port2 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj2));
+
+
+    port1->setRole(PortRole::Master);
+    port2->setRole(PortRole::Slave);
+
 
     // 绑定端口
-    port1->bind(port2.get());
+    port1->bind(port2);
 
     // 发送和接收数据
     port1->send(42);

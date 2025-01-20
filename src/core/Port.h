@@ -1,100 +1,101 @@
 #ifndef PORT_H
 #define PORT_H
 
-#include <any>
-#include <queue>
 #include <memory>
-#include <functional>
-#include <stdexcept>
 #include <refl.hpp>
+#include "EntityIntern.h"
 #include "Property.h"
 
 enum class PortRole { Master, Slave };
+PortRole parse_role(std::string_view str) ;
+
+class Port;
+
+struct PortParam {
+    EntityHashType entity_hash;
+    std::shared_ptr<PortParam> peer_;
+    PortRole role_;
+    //std::deque<std::any> dataQueue_;
+    std::deque<rfl::Generic> dataQueue_;
+};
 
 class Port {
 public:
-    // 构造函数
-    Port() = default;
-    explicit Port(PortRole role) : role_(role) {}
+    using GenericType = std::shared_ptr<PortParam>;
+    GenericType generic_;
 
-    // 绑定到另一个端口
-    void bind(Port* peer) {
-        peer_ = peer;
-        peer->peer_ = this;
+    static std::shared_ptr<Port> GetInstance(GenericType generic) {
+        auto entity = EntityRef::getEntityByHash(generic->entity_hash);
+        return entity.getObject<Port>();
     }
 
-    // 设置角色
+    explicit Port(GenericType generic);
+    Port() = delete;
+    // TODO fix to delete generic_
+    ~Port() = default;
+
+    const GenericType& getGeneric() const { return generic_; }
+    void setGeneric(GenericType generic) { generic_ = generic; }
+
+    void bind(std::shared_ptr<Port> peer) {
+        generic_->peer_ = peer->getGeneric();
+    }
+
     void setRole(PortRole role) {
-        role_ = role;
+        generic_->role_ = role;
     }
 
-    // 获取角色
     PortRole getRole() const {
-        return role_;
+        return generic_->role_;
     }
 
     template <typename T>
     void send(const T& data) {
-        assert(peer_);
-        //if (peer_ && role_ == PortRole::Master) {
-        peer_->sendData(std::any(data));
+        assert(generic_->peer_);
+        generic_->peer_->dataQueue_.push_back(rfl::to_generic(data));
     }
 
-    // 模板函数：接收数据
     template <typename T>
     T receive() {
         if (hasData()) {
-            T data = std::any_cast<T>(receiveData());
+            T data = rfl::from_generic<T>(receiveData()).value();
             return data;
         }
         throw std::runtime_error("No data available to receive");
     }
 
-    // 检查是否有数据可以接收
     bool hasData() const {
-        return !dataQueue_.empty();
+        return !generic_->dataQueue_.empty();
     }
 
-    // 克隆函数
-    std::unique_ptr<Port> clone() const {
-        return std::make_unique<Port>(*this);
-    }
+    //std::unique_ptr<Port> clone() const {
+        //return std::make_unique<Port>(*this);
+    //}
 
-    // 添加观察者
     void addObserver(std::function<void()> observer) {
         observers_.push_back(observer);
     }
 
-    // 通知观察者
     void notifyObservers() {
         for (const auto& observer : observers_) {
             observer();
         }
     }
 
-    // 存储数据
-    void sendData(const std::any& data) {
-        dataQueue_.push(data);
-    }
 
-    // 获取数据
-    std::any receiveData() {
-        if (!dataQueue_.empty()) {
-            std::any data = dataQueue_.front();
-            dataQueue_.pop();
+    GenericRef receiveData() {
+        if (!generic_->dataQueue_.empty()) {
+            GenericRef data = generic_->dataQueue_.front();
+            generic_->dataQueue_.pop_front();
             return data;
         }
         throw std::runtime_error("No data available to receive");
     }
 
-    // 对端指针
-    Port* peer_ = nullptr;
-
-    // 角色
-    PortRole role_ = PortRole::Master;
-
-    // 数据队列
-    std::queue<std::any> dataQueue_;
+    //std::shared_ptr<Port> peer_ {nullptr};
+    //PortRole role_;
+    //std::deque<std::any> dataQueue_;
+    //std::deque<GenericRef> dataQueue_;
 
     // 观察者列表
     std::vector<std::function<void()>> observers_;
@@ -158,11 +159,11 @@ public:
         //return *this;
     //}
 
-
-REFL_AUTO(
+ REFL_AUTO(
     type(Port),
-    field(role_, Property())
+    field(generic_)
     )
+
 
 
 #endif // PORT_H

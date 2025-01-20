@@ -45,8 +45,7 @@ public:
 // 注册组件类型
 REFL_AUTO(
     type(Component),
-    field(ports_),
-    field(portsUpdated_)
+    field(ports_)
 )
 
 #endif // COMPONENT_H

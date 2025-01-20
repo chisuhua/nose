@@ -5,7 +5,7 @@
 
 class ComponentBindVisitor : public Visitor<void> {
 public:
-    void visit(Entity& entity) override {
+    void visit(EntityRef entity, int level) override {
         auto component = std::static_pointer_cast<Component>(entity.getObject(entity.getName()));
         if (component) {
             for (const auto& [key, childEntity] : entity.getChildren()) {
@@ -22,9 +22,9 @@ public:
                 }
             }
         }
-        Visitor<void>::visit(entity);
+        Visitor<void>::visit(entity, level);
     }
 
-    void visitObject(const std::shared_ptr<void>&, const std::string&) override {}
+    void visitObject(const std::shared_ptr<void>&, StringRef) override {}
 };
 

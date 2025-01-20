@@ -1,21 +1,26 @@
-#pragma once
-#include <cxxabi.h>
+#ifndef TYPEMANAGER_H
+#define TYPEMANAGER_H
+#include <stdexcept>
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include <map>
 #include <functional>
 #include <variant>
 #include <any>
 #include <type_traits>
-#include <typeinfo>
 #include <refl.hpp>
+#include "EntityIntern.h"
 #include "StringIntern.h"
 #include "Property.h"
-#include "Port.h"
+#include "TypeInfo.h"
 
 using KeyValueParser = ValueType(*)(const std::string&, const std::string&);
 using PropertiesSetter = void(*)(const std::shared_ptr<void>, ElementProperties&);
+
+using ObjectCreator = std::function<std::shared_ptr<void>(std::optional<GenericRef>)>;
+
+using StorageObjectCreator = std::function<std::shared_ptr<void>(EntityRef, std::optional<GenericRef>)>;
+
 
 class PropertyMeta {
 public:
@@ -23,11 +28,23 @@ public:
     template <typename T>
     static PropertyMeta createMetadata()
     {
-        constexpr auto type_name = refl::reflect<T>().name;
         PropertyMeta md;
-        md.name_ = type_name.c_str();
-        md.value_parser_ = &PropertyMeta::ParsePropertyValue<T>;
-        md.properties_setter_ = &PropertyMeta::SetProperties<T>;
+        if constexpr(refl::trait::is_reflectable_v<T>) {
+            constexpr auto type_name = refl::reflect<T>().name;
+            md.name_ = type_name.c_str();
+            md.value_parser_ = &PropertyMeta::ParsePropertyValue<T>;
+            md.properties_setter_ = &PropertyMeta::SetProperties<T>;
+            md.object_creator_ = &PropertyMeta::CreateObject<T>;
+            md.storage_object_creator_ = nullptr;
+        } else {
+            auto type_name = TypeInfo::Get<T>().Name();
+            md.name_ = type_name;
+            md.value_parser_ = &PropertyMeta::ParsePropertyValue<T>;
+            md.properties_setter_ = &PropertyMeta::SetProperties<T>;
+            md.object_creator_ = &PropertyMeta::CreateObject<T>;
+            md.storage_object_creator_ = nullptr;
+        }
+
         return md;
     }
 
@@ -39,146 +56,134 @@ public:
         return properties_setter_(instance, properties);
     }
 
-    std::string_view name() const {
+    std::shared_ptr<void> createObject(std::optional<GenericRef> rfl_generic) {
+        return object_creator_(rfl_generic);
+    }
+
+    std::shared_ptr<void> createStorageObject(EntityRef entity, std::optional<GenericRef> rfl_generic) {
+        if (storage_object_creator_ == nullptr) {
+            throw std::runtime_error("please register storage object creator before use it\n");
+        }
+        return storage_object_creator_(entity, rfl_generic);
+    }
+
+    void registerStorageObjectCreator(StorageObjectCreator& creator) {
+        storage_object_creator_ = creator;
+    }
+
+    StringRef name() const {
         return name_;
     }
 
 private:
-    std::string name_;
+    StringRef name_;
     KeyValueParser value_parser_;
     PropertiesSetter properties_setter_;
+    ObjectCreator object_creator_;
+    StorageObjectCreator storage_object_creator_;
 
     template <typename T>
     static ValueType ParsePropertyValue(const std::string& path_key, const std::string& value) {
-        for_each(refl::reflect<T>().members, [&](auto member) {
-            if constexpr (refl::descriptor::has_attribute<Property>(member)) {
+        ValueType result;
+        if constexpr(refl::trait::is_reflectable_v<T>) {
+            for_each(refl::reflect<T>().members, [&](auto member) {
                 using member_type = typename decltype(member)::value_type;
-                const auto& prop = refl::descriptor::get_attribute<Property>(member);
-                if (path_key == "*" || member.name.str() == path_key) {
-                    return ValueType(prop.template parse<member_type>(value));
+                if ((member.name.str() != path_key) && (path_key != "*")) {
+                    //std::cout << "skip parse value: " << path_key << "=" << value << " member name:" << member.name.str() << " member type:" << TypeInfo::Get<member_type>().Name()->str() << "\n";
+                    return;
                 }
-            }
-        });
-        return ValueType(nullptr);
+                if constexpr (refl::descriptor::has_attribute<Property>(member)) {
+                    const auto& prop = refl::descriptor::get_attribute<Property>(member);
+                    std::cout << "ParseProperty Value: " << path_key << "=" << value << "\n";
+                    result = prop.template parse<member_type>(value);
+                } else {
+                    std::cout << "ParseNonProperty Value: " << path_key << "=" << value << " member name:" << member.name.str() << " member type:" << TypeInfo::Get<member_type>().Name()->str() << "\n";
+                    result = parser::default_parser<member_type>(value);
+                }
+            });
+        } else {
+            throw std::runtime_error(" non reflectable should not called ParsePropertyValue");
+        }
+        return result;
     }
 
     template <typename T>
     static void SetProperties(const std::shared_ptr<void> instance, ElementProperties& properties) {
-        auto instanceT = std::static_pointer_cast<T>(instance);
-        for_each(refl::reflect<T>().members, [&](auto member) {
-            if constexpr (refl::descriptor::has_attribute<Property>(member)) {
-                auto&& prop = refl::descriptor::get_attribute<Property>(member);
-                if (auto propIter = properties.find(member.name.str()); propIter != properties.end()) {
-                    using member_type = typename decltype(member)::value_type;
-                    member(*instanceT) = std::visit([&](auto&& arg) -> member_type {
-                        if constexpr (std::is_same_v<member_type, decltype(arg)>) {
-                            return arg;
-                        } else if constexpr (std::is_same_v<rfl::Generic, decltype(arg)>) {
-                            return rfl::from_generic<member_type>(arg).value();
-                        } else {
-                            throw std::runtime_error("Unsupported type conversion");
-                        }
-                    }, propIter->second);
+        if constexpr(refl::trait::is_reflectable_v<T>) {
+            auto instanceT = std::static_pointer_cast<T>(instance);
+            for_each(refl::reflect<T>().members, [&](auto member) {
+                if constexpr (refl::descriptor::has_attribute<Property>(member)) {
+                    auto&& prop = refl::descriptor::get_attribute<Property>(member);
+                    if (auto propIter = properties.find(member.name.str()); propIter != properties.end()) {
+                        using member_type = typename decltype(member)::value_type;
+                        member(*instanceT) = std::visit([&](auto&& arg) -> member_type {
+                            if constexpr (std::is_same_v<std::decay_t<member_type>, std::decay_t<decltype(arg)>>) {
+                                std::cout << "SetProperty Value: " << arg << "\n";
+                                return arg;
+                            } else if constexpr (std::is_same_v<rfl::Generic, std::decay_t<decltype(arg)>>) {
+                                std::cout << "SetProperty json Value: " << rfl::json::write(arg) << "\n";
+                                return rfl::from_generic<member_type>(arg).value();
+                            } else if constexpr (std::is_same_v<std::any, std::decay_t<decltype(arg)>>) {
+                                std::cout << "SetProperty any Value: " << member.name.str() <<"\n";
+                                return std::any_cast<member_type>(arg);
+                            } else {
+                                std::cout << "member name:" << member.name.str() << " member type:" << TypeInfo::Get<member_type>().Name()->str() << " and arg: " <<  " arg type " + TypeInfo::Get<decltype(arg)>().Name()->str() << "\n";
+                                //return std::any_cast<member_type>(arg);
+                                throw std::runtime_error("Unsupported property type conversion");
+                            }
+                        }, propIter->second);
+                    }
+                } else {
+                    if (auto propIter = properties.find(member.name.str()); propIter != properties.end()) {
+                        using member_type = typename decltype(member)::value_type;
+                        member(*instanceT) = std::visit([&](auto&& arg) -> member_type {
+                            if constexpr (std::is_same_v<std::decay_t<member_type>, std::decay_t<decltype(arg)>>) {
+                                std::cout << "SetNonProperty Value: " << arg << "\n";
+                                return arg;
+                            } else if constexpr (std::is_same_v<rfl::Generic,std::decay_t<decltype(arg)>>) {
+                                std::cout << "SetNonProperty json Value: " << rfl::json::write(arg) << "\n";
+                                return rfl::from_generic<member_type>(arg).value();
+                            } else if constexpr (std::is_same_v<std::any, std::decay_t<decltype(arg)>>) {
+                                std::cout << "SetNonProperty any Value: " << member.name.str()  << "\n";
+                                return std::any_cast<member_type>(arg);
+                            } else {
+                                // return std::any_cast<member_type>(arg);
+                                //return member_type(arg);
+                                std::cout << "member name:" << member.name.str() << " member type:" << TypeInfo::Get<member_type>().Name()->str() << " and arg: " <<  " arg type " + TypeInfo::Get<decltype(arg)>().Name()->str() << "\n";
+                                //throw std::runtime_error(TypeInfo::Get<member_type>().Name()->str() + " and arg type " + TypeInfo::Get<decltype(arg)>().Name()->str());
+                                throw std::runtime_error("Unsupported nonproperty type conversion");
+                            }
+                        }, propIter->second);
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            throw std::runtime_error(" non reflectable should not called SetProperties") ;
+        }
     }
 
-    //template<typename member_type, typename Parser = std::nullptr_t>
-    //static ValueType parseValue(const Property<Parser>& prop, const std::string& valueStr) {
-        ////if constexpr (std::is_same_v<Parser, std::nullptr_t>) {
-            ////return default_parser<member_type>()(valueStr);
-        ////} else {
-            //return ValueType(prop.template parse<member_type>(valueStr));
-        ////}
-    //}
-
-    ////template <typename T>
-    //static GetPropertyValue(std::shared_ptr<void> instance, const ElementProperties& props)
-    //{
-        //for_each(refl::reflect<T>().members, [&](auto member) {
-            //if constexpr (refl::descriptor::has_attribute<Property>(member)) {
-                //auto&& prop = refl::descriptor::get_attribute<Property>(member);
-                //if (auto propIter = props.find(member.name.str()); propIter != props.end()) {
-                    //member(instance.get()) = std::visit([&](auto&& arg) -> member_type {
-                        //if constexpr (std::is_same_v<member_type, decltype(arg)>) {
-                            //return arg;
-                        //} else if constexpr (std::is_same_v<std::any, decltype(arg)>) {
-                            //return std::any_cast<member_type>(arg);
-                        //} else {
-                            //throw std::runtime_error("Unsupported type conversion");
-                        //}
-                    //}, it->second);
-                //}
-            //}
-        //});
-
-
-        /**
-         * for_each loop above essentially gets compiled to multiples of the following (pseudo-code):
-         * if (auto propIter = props.find("MemberA"); propIter != props.end()) {
-         *     instance.MemberA = prop.parser(propIter->second);
-         * }
-         */
-
-        //return instance;
-    //}
-};
-
-class TypeInfo
-{
-public:
-
-    // instances can be obtained only through calls to Get()
     template <typename T>
-    static const TypeInfo& Get()
-    {
-        // here we create the singleton instance for this particular type
-        //static const TypeInfo ti(refl::reflect<T>());
-        using decayType= typename std::decay<T>::type;
-        static const TypeInfo ti(typeid(decayType));
-        return ti;
+    static std::shared_ptr<void> CreateObject(std::optional<GenericRef> rfl_generic) {
+        if constexpr(has_generic_v<T>) {
+            using GenericType = typename T::GenericType;
+            if (rfl_generic) {
+                GenericType obj = rfl::from_generic<GenericType>(rfl_generic.value()).value();
+                return std::static_pointer_cast<void>(std::make_shared<T>(obj));
+            } else {
+                GenericType obj;
+                return std::static_pointer_cast<void>(std::make_shared<T>(obj));
+            }
+        } else {
+            T obj = rfl::from_generic<T>(rfl_generic.value()).value();
+            return std::static_pointer_cast<void>(std::make_shared<T>(obj));
+        }
     }
 
-    std::string demangle(const char* mangle_name) {
-        int status = -4;
-        std::unique_ptr<char, void(*)(void*)> res {
-            abi::__cxa_demangle(mangle_name, NULL, NULL, &status),
-            std::free
-        };
-        return (status == 0) ? res.get() : mangle_name;
+    template <typename T>
+    static std::shared_ptr<T> Cast(std::optional<GenericRef> rfl_generic) {
     }
-
-    StringRef Name() const
-    {
-        return name_;
-    }
-
-private:
-
-    const std::type_info& type_;
-
-    // were only storing the name for demonstration purposes,
-    // but this can be extended to hold other properties as well
-    // std::string name_;
-    StringRef name_;
-
-    // given a type_descriptor, we construct a TypeInfo
-    // with all the metadata we care about (currently only name)
-    // template <typename T, typename... Fields>
-    // TypeInfo(refl::type_descriptor<T> td)
-    //     : name_(td.name)
-    // {
-    // }
-
-    TypeInfo(const std::type_info& ti)
-        : type_(ti)
-        , name_(demangle(ti.name()))
-    {
-        //name_ = String::intern(demangle(ti.name()));
-    }
-
 };
+
 
 
 class TypeManager {
@@ -189,6 +194,8 @@ public:
     }
 
     TypeManager() = default;
+
+    ~TypeManager() {};
 
     template <typename T>
     StringRef getTypeName() {
@@ -202,6 +209,11 @@ public:
         auto it = metadata.find(type_name);
         if (it == metadata.end()) {
             metadata[type_name] = PropertyMeta::createMetadata<T>();
+            if constexpr(has_generic_v<T>) {
+                using GenericType = typename T::GenericType;
+                StringRef generic_type_name = getTypeName<GenericType>();
+                metadata[generic_type_name] = PropertyMeta::createMetadata<GenericType>();
+            }
         }
         return type_name;
     }
@@ -216,72 +228,39 @@ public:
         ////typeDescriptors_[typeName] = &refl::reflect<Template<Arg>>();
     //}
 
-    //std::shared_ptr<void> setupElement(std::shared_ptr<void> instance, const std::string& type_name, const ElementProperties& props) {
-        //auto it = metadata.find(type_name);
-        //if (it != metadata.end()) {
-            //it->setupELement(instance, props);
-            //return instance;
-        //}
-        //throw std::runtime_error("Type not registered: " + type_name);
-    //}
-
-    //void initialize(std::shared_ptr<void> instance, const std::string& typeName, const ElementProperties& props) {
-        //const auto& type = *typeDescriptors_.at(typeName);
-        //refl::runtime::for_each(type.members, [&](auto member) {
-            //if constexpr (refl::descriptor::has_attribute<Property<>>(member)) {
-                //using member_type = typename decltype(member)::value_type;
-                //const auto& prop = refl::descriptor::get_attribute<Property<>>(member);
-                //if (auto it = props.find(member.name.str()); it != props.end()) {
-                    //member(instance.get()) = std::visit([&](auto&& arg) -> member_type {
-                        //if constexpr (std::is_same_v<member_type, decltype(arg)>) {
-                            //return arg;
-                        //} else if constexpr (std::is_same_v<std::any, decltype(arg)>) {
-                            //return std::any_cast<member_type>(arg);
-                        //} else {
-                            //throw std::runtime_error("Unsupported type conversion");
-                        //}
-                    //}, it->second);
-                //}
-            //}
-        //});
-    //}
-
-
-    //template<typename member_type, typename Parser = std::nullptr_t>
-    //static ValueType parseValue(const Property<Parser>& prop, const std::string& valueStr) {
-        ////if constexpr (std::is_same_v<Parser, std::nullptr_t>) {
-            ////return default_parser<member_type>()(valueStr);
-        ////} else {
-            ////return ValueType(prop.template parse<member_type>(valueStr));
-            //return ValueType(prop.parse(valueStr));
-        ////}
-    //}
-
     const std::unordered_map<StringRef, PropertyMeta>& getPropertyMeta() const {
         return metadata;
     }
-    //}
 
 
     ValueType parsePropertyValue(StringRef type_name, const std::string& path_key, const std::string& value) const {
         return metadata.at(type_name).parsePropertyValue(path_key, value);
-        //auto it = metadata.find(type_name);
-        //if (it != metadata.end()) {
-            //return (it->second).getPropertyValue(path_key, value);
-        //}
-        //throw std::runtime_error("Type is not registered!");
     }
 
     void setProperties(StringRef type_name, std::shared_ptr<void> instance, ElementProperties properties) {
         metadata.at(type_name).setProperties(instance, properties);
     }
 
+    std::shared_ptr<void> createObject(StringRef type_name,  std::optional<GenericRef> rfl_generic) {
+        return metadata.at(type_name).createObject(rfl_generic);
+    }
+
+    std::shared_ptr<void> createStorageObject(StringRef type_name, EntityRef entity, std::optional<GenericRef> rfl_generic) {
+        return metadata.at(type_name).createStorageObject(entity, rfl_generic);
+    }
+
+    template<typename T>
+    std::shared_ptr<void> createStorageObject(EntityRef entity, std::optional<GenericRef> rfl_generic) {
+        StringRef type_name = getTypeName<T>();
+        auto obj =  metadata.at(type_name).createStorageObject(entity, rfl_generic);
+        return std::static_pointer_cast<T>(obj);
+    }
+
+    void registerStorageObjectCreator(StringRef type_name, StorageObjectCreator&& creator) {
+        metadata.at(type_name).registerStorageObjectCreator(creator); 
+    }
+
 private:
     std::unordered_map<StringRef, PropertyMeta> metadata;
-
-
-    //std::unordered_map<std::string, ConstructorFunction> constructors_;
-    //std::unordered_map<std::string, std::function<std::shared_ptr<void>()>> factories_;
-    // std::unordered_map<std::string, const refl::descriptor::type_descriptor*> typeDescriptors_;
-    //std::unordered_map<std::string, std::any> typeDescriptors_;
 };
+#endif

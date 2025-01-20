@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PROPERTY_H
+#define PROPERTY_H
 #include <string>
 #include <unordered_map>
 #include <stdexcept>
@@ -15,12 +16,29 @@
 // 定义 ValueType 作为节点的属性值类型
 using ValueType = std::variant<nullptr_t, int, float, std::string, bool, double, uint64_t, rfl::Generic, std::any>;
 using ElementProperties = std::unordered_map<std::string, ValueType>;
+using GenericRef = std::reference_wrapper<const rfl::Generic>;
+using GenericPtr = std::shared_ptr<rfl::Generic>;
 
-// 辅助模板判断类型
+template <typename T, typename = void>
+struct is_reflectable : std::false_type {};
+
+template <typename T>
+struct is_reflectable<
+    T,
+    std::void_t<
+        std::conditional_t<
+            refl::trait::is_reflectable<T>::value ||
+            std::is_convertible_v<T, rfl::Generic::VariantType>,
+            void,
+            std::false_type
+        >
+    >
+> : std::true_type {};
+
+#if 0
 template <typename T>
 struct always_false : std::false_type {};
 
-#if 0
 // 辅助结构体检测是否为容器类型
 template <typename T, typename _ = void>
 struct is_container : std::false_type {};
@@ -95,7 +113,7 @@ namespace parser {
     template <typename T>
     ValueType default_parser(const std::string& valueStr) {
         if constexpr (std::is_same_v<T, int>) {
-            return std::stoi(valueStr);
+            return ValueType(std::stoi(valueStr));
         } else if constexpr (std::is_same_v<T, float>) {
             return std::stof(valueStr);
         } else if constexpr (std::is_same_v<T, std::string>) {
@@ -156,4 +174,4 @@ struct Property : refl::attr::usage::field {
         }
     }
 };
-
+#endif

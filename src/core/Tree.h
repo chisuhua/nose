@@ -1,36 +1,42 @@
 #pragma once
 #include <memory>
 #include "PathUtils.h"
-#include "Entity.h"
+#include "EntityIntern.h"
 
 class Tree {
 public:
-    Tree() {
-        root_ = std::make_shared<Entity>("/");
-        current_ = root_;
+    Tree() 
+        : root_(EntityRef("/root", ""))
+        , current_(root_)
+    {}
+
+    Tree(std::string name)
+        : root_(EntityRef(name, ""))
+        , current_(root_)
+    {
     }
 
-    std::shared_ptr<Entity> getRoot() const { return root_; }
-    std::shared_ptr<Entity> getCurrent() const { return current_; }
+    EntityRef getRoot() const { return root_; }
+    EntityRef getCurrent() const { return current_; }
 
-    void setCurrent(std::shared_ptr<Entity> current) { current_ = current; }
+    void setCurrent(EntityRef current) { current_ = current; }
 
     void changeCurrent(const std::string& path) {
-        std::shared_ptr<Entity> start_entity = (path.front() == '/') ? root_ : current_;
+        EntityRef start_entity = (path.front() == '/') ? root_ : current_;
         current_ = traverseToEntity(start_entity, path);
-        if (current_) {
+        if (!current_) {
             throw std::runtime_error("Path not found:" + path);
         }
     }
 
-    std::shared_ptr<Entity> findEntity(const std::string& path) const {
+    EntityRef findEntity(const std::string& path) const {
         auto parts = PathUtils::split(path);
         auto current_entity = root_;
 
         for (const auto& part : parts) {
-            auto child = current_entity->getChild(part);
+            auto child = current_entity.getChild(part);
             if (!child) {
-                return nullptr;
+                return child;
             }
             current_entity = child;
         }
@@ -38,31 +44,32 @@ public:
     }
 
     void accept(Visitor<void>& visitor, const std::string& path = "") {
-        std::shared_ptr<Entity> start_entity = (path.empty() || path.front() == '/') ? root_ : current_;
+        EntityRef start_entity = (path.empty() || path.front() == '/') ? root_ : current_;
         auto target_entity = traverseToEntity(start_entity, path);
         if (!target_entity) {
             throw std::runtime_error("Path not found: " + path);
         }
-        target_entity->accept(visitor);
+        target_entity.accept(visitor);
     }
 
 
 private:
-    std::shared_ptr<Entity> traverseToEntity(std::shared_ptr<Entity> start_entity, const std::string& path) {
+    EntityRef traverseToEntity(EntityRef start_entity, const std::string& path) {
         std::vector<std::string> parts = PathUtils::split(path);
         auto current = start_entity;
 
         for (const auto& part : parts) {
             if (part == "..") {
-                current = current->getParent().lock();
+                current = current.getParent();
                 if (!current) {
                     throw std::runtime_error("No parent directory");
                 }
             } else {
-                auto child = current->getChild(part);
+                auto child = current.getChild(part);
                 if (!child) {
-                    child = std::make_shared<Entity>(part);
-                    current->addChild(child);
+                    return EntityRef();
+                    //child = Entity(part, current.getPath());
+                    //current.addChild(child);
                 }
                 current = child;
             }
@@ -71,6 +78,6 @@ private:
     }
 
     
-    std::shared_ptr<Entity> root_;
-    std::shared_ptr<Entity> current_;
+    EntityRef root_;
+    EntityRef current_;
 };

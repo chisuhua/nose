@@ -19,11 +19,11 @@ public:
         return parts;
     }
 
-    static std::string join(const std::vector<std::string>& parts) {
+    static std::string join(const std::vector<std::string>& parts, const std::string& delimiter = "/") {
         std::ostringstream oss;
         for (size_t i = 0; i < parts.size(); ++i) {
             if (i != 0) {
-                oss << "/";
+                oss << delimiter;
             }
             oss << parts[i];
         }

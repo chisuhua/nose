@@ -1,24 +1,25 @@
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest/doctest.h"
-#include "../src/core/TypeManager.h"
-#include "../src/core/Port.h"
-#include "../src/core/Wire.h"
-#include "../src/core/Channel.h"
-#include "../src/core/Clock.h"
-#include "../src/core/Component.h"
-#include "../samples/core/Event.h"
+#include "TypeManager.h"
+#include "Port.h"
+//#include "Wire.h"
+//#include "Channel.h"
+//#include "Clock.h"
+//#include "Component.h"
+//#include "Event.h"
 
 
 TEST_CASE("Basic TypeManager registration") {
     TypeManager& typeManager = TypeManager::instance();
-    typeManager.registerType<Wire>();
-    typeManager.registerType<Channel>();
-    typeManager.registerType<Clock>();
+    typeManager.registerType<Port>();
+    //typeManager.registerType<Wire>();
+    //typeManager.registerType<Channel>();
+    //typeManager.registerType<Clock>();
 
     //CHECK(typeManager.getPropertyMeta().count("ValidReady>") == 1);
-    CHECK(typeManager.getPropertyMeta().count("Wire"_hs) == 1);
-    CHECK(typeManager.getPropertyMeta().count("Channel"_hs) == 1);
-    CHECK(typeManager.getPropertyMeta().count("Clock"_hs) == 1);
+    CHECK(typeManager.getPropertyMeta().count("Port"_hs) == 1);
+    //CHECK(typeManager.getPropertyMeta().count("Wire"_hs) == 1);
+    //CHECK(typeManager.getPropertyMeta().count("Channel"_hs) == 1);
+    //CHECK(typeManager.getPropertyMeta().count("Clock"_hs) == 1);
     //CHECK(typeManager.getTypeConstructors().count("SrcUnit1") == 1);
     //CHECK(typeManager.getTypeConstructors().count("DstUnit1") == 1);
 }

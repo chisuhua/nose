@@ -1,27 +1,41 @@
 #include "doctest/doctest.h"
 #include "Wire.h"
-#include <iostream>
 
 TEST_CASE("Wire functionality") {
-    // 创建 Wire 实例
-    Wire wire;
+    EntityRef entity_wire("wire");
+
+    Wire::GenericType wire_generic;
+
+    auto generic_wire = rfl::to_generic(wire_generic);
+
+    auto wire = entity_wire.getOrCreateObject<Wire>(std::cref(generic_wire));
 
     // 添加端口
-    auto port1 = std::make_unique<Port>(PortRole::Master);
-    auto port2 = std::make_unique<Port>(PortRole::Slave);
-    wire.connect_.push_back(std::move(port1));
-    wire.connect_.push_back(std::move(port2));
+    EntityRef entity_port1("port1");
+    EntityRef entity_port2("port2");
 
-    // 绑定端口
-    wire.Bind();
+    Port::GenericType port1_generic;
+    Port::GenericType port2_generic;
 
-    // 发送和接收数据
-    wire.connect_[0]->send(42);
-    CHECK(wire.connect_[1]->hasData());
-    CHECK(wire.connect_[1]->receive<int>() == 42);
+    auto generic_obj1 = rfl::to_generic(port1_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
+    auto generic_obj2 = rfl::to_generic(port2_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
+                                                       //
+    auto port1 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj1));
+    auto port2 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj2));
 
-    wire.connect_[1]->send(std::string("Hello, World!"));
-    CHECK(wire.connect_[0]->hasData());
-    CHECK(wire.connect_[0]->receive<std::string>() == "Hello, World!");
+
+    wire->setMasterPort(port1);
+    wire->setSlavePort(port2);
+
+    wire->bind();
+
+    port1->send(42);
+
+    CHECK(port2->hasData());
+    CHECK(port2->receive<int>() == 42);
+
+    port2->send(std::string("Hello, World!"));
+    CHECK(port1->hasData());
+    CHECK(port1->receive<std::string>() == "Hello, World!");
 }
 

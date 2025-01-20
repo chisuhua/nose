@@ -31,9 +31,9 @@ include_directories(
   external/reflect-cpp/include
   external/refl-cpp/include
   external/pybind11/include
-  src/core
   src/core/visitor
   src/core/loader
+  src/core
   src/utils
   src/system
   src/system/graph
@@ -45,6 +45,7 @@ include_directories(
 set(core_files
   src/core/TypeManager.h
   src/core/Port.h
+  src/core/Port.cpp
   src/core/Bundle.h
   src/core/Wire.h
   src/core/Channel.h
@@ -53,6 +54,7 @@ set(core_files
   src/core/Tree.h
   src/core/Entity.h
   src/core/Entity.cpp
+  src/core/EntityIntern.h
   src/core/Storage.h
   src/core/Registry.h
   src/core/loader/IniLoader.h
@@ -71,10 +73,11 @@ set(src_files
 # 建立动态库
 add_library(nose SHARED ${src_files})
 target_include_directories(nose PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(nose PUBLIC reflectcpp)
 
 # 编译 main.cpp 作为 sample 可执行文件
-add_executable(sample samples/core/main.cpp)
-target_link_libraries(sample PRIVATE nose reflectcpp)
+#add_executable(sample samples/core/main.cpp)
+#target_link_libraries(sample PRIVATE nose)
 
 # 编译和运行测试用例
 option(BUILD_DOCTEST "Build with doctest support" ON)
@@ -83,7 +86,6 @@ if(BUILD_DOCTEST)
     tests/test_basic.cpp
     tests/test_port.cpp
     tests/test_wire.cpp
-    tests/test_port.cpp
     tests/test_component.cpp
     tests/test_channel.cpp
     tests/test_port_bind.cpp
@@ -92,7 +94,7 @@ if(BUILD_DOCTEST)
   )
 
   add_executable(tests ${test_files})
-  target_link_libraries(tests PRIVATE nose reflectcpp)
+  target_link_libraries(tests PRIVATE nose)
   #add_test(NAME test_basic COMMAND tests)
 endif()
 

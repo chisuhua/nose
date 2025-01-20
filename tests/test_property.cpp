@@ -1,3 +1,4 @@
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest/doctest.h"
 #include <iostream>
 #include <string>
@@ -26,10 +27,36 @@ Orientation parse_orientation(std::string_view str) {
     throw std::runtime_error("Cannot parse " + std::string(str) + " as Orientation");
 }
 
+void print_orientation(Orientation ori) {
+    if (ori == Orientation::Horizontal) {
+        std::cout << "Hori\n";
+    } else if (ori == Orientation::Vertical) {
+        std::cout << "Vert\n";
+    } else {
+        throw std::runtime_error("invalid Orientation");
+    }
+}
+
 // Custom parsing function
 std::string parse_custom(const std::string& value_str) {
     return "Custom Parsed: " + value_str;
 }
+
+struct Person {
+  std::string first_name;
+  std::string last_name;
+  int age;
+};
+
+using PersonsType = std::vector<rfl::Ref<Person>>;
+PersonsType parse_person(const std::string& value_str) {
+    return rfl::json::read<PersonsType>(value_str).value();
+}
+
+
+REFL_AUTO(
+    type(Person)
+)
 
 class CustomObject {
 public:
@@ -37,20 +64,48 @@ public:
     float floatval;
     std::string strval;
     Orientation orientation;
+    Person person;
+    std::vector<rfl::Ref<Person>> persons;
 
 };
 // Reflexion macro
 REFL_AUTO(
     type(CustomObject),
-    field(intval, Property()),
-    field(floatval, Property()),
+    field(intval),
+    field(floatval),
     field(strval, Property(&parse_custom)),
-    field(orientation, Property(PropertyType::Required, &parse_orientation))
+    field(orientation, Property(PropertyType::Required, &parse_orientation)),
+    field(person),
+    field(persons, Property(&parse_person))
 )
+
+// It is not Generalizable Object
+class CustomTop {
+public:
+    using GenericType = std::shared_ptr<CustomObject>;
+    GenericType generic_;
+
+    explicit CustomTop(GenericType generic): generic_(generic) {}
+
+    CustomTop() = delete;
+
+    ~CustomTop() = default;
+
+    const GenericType& GetGeneric() const { return generic_; }
+    void setGeneric(GenericType generic) { generic_ = generic; }
+
+};
+
+REFL_AUTO(
+    type(CustomTop),
+    field(generic_)
+)
+
+
 
 class SummationVisitor : public Visitor<void> {
 public:
-    virtual void visitObject(const std::shared_ptr<void>& obj, const std::string& key) override {
+    virtual void visitObject(const std::shared_ptr<void>& obj, StringRef) override {
         auto custom_object = std::static_pointer_cast<CustomObject>(obj);
         if (custom_object) {
             // 实现求和逻辑
@@ -68,11 +123,13 @@ private:
 };
 
 REGISTER_OBJECT(CustomObject)
+REGISTER_OBJECT(Person)
+REGISTER_OBJECT(CustomTop)
 
 TEST_CASE("Basic Property") {
     // 创建 TypeManager 实例并注册 CustomObject
     TypeManager& typeManager = TypeManager::instance();
-    //typeManager.registerType<CustomObject>("CustomObject");
+    //typeManager.registerType<CustomTop, false>();
 
     // 创建 Tree 实例并加载配置
     Tree tree;
@@ -82,29 +139,50 @@ TEST_CASE("Basic Property") {
         loader.load("tests/config.ini", tree);
 
         // 使用 ObjectBuilderVisitor 创建对象
-        ObjectBuildVisitor builderVisitor(typeManager, Registry::getInstance());
+        ObjectBuildVisitor builderVisitor(typeManager);
         tree.accept(builderVisitor);
 
-      // 使用 PrinterVisitor 打印树结构
+        // 使用 PrinterVisitor 打印树结构
         PrinterVisitor printerVisitor;
         tree.accept(printerVisitor);
 
-        auto entity = tree.findEntity("a/b");
-        CHECK(entity != nullptr);
+        auto entity = tree.findEntity("/a/b");
+        CHECK(entity.isValid());
 
-        auto obj1 = std::static_pointer_cast<CustomObject>(entity->getObject(entity->getName()));
+        auto obj1 = entity.getObject<CustomObject>();
         CHECK(obj1 != nullptr);
 
-        auto obj2 = std::static_pointer_cast<CustomObject>(entity->getChild("c")->getObject("CustomObject"));
-
+        auto obj2 = entity.getChild("c")->getObject<CustomObject>();
         CHECK(obj2 != nullptr);
 
-        CHECK(obj1->intval == 10);
-        CHECK(obj2->intval == 30);
+        CHECK(obj1->intval == 30);
+        CHECK(obj2->intval == 50);
 
-        std::cout << obj1->strval << " " << obj2->strval << "\n";
+        std::cout << "intval:" << obj1->intval << " " << obj2->intval << "\n";
+        std::cout << "floatval:" << obj1->floatval << " " << obj2->floatval << "\n";
+        std::cout << "strval:" << obj1->strval << " " << obj2->strval << "\n";
+        print_orientation(obj1->orientation);
+        print_orientation(obj2->orientation);
+        std::cout << "person:" << obj1->person.first_name << " " << obj2->person.first_name << "\n";
 
-          // 使用 SummationVisitor 求和
+        auto person_a_entity = tree.findEntity("/a/b/person_a");
+        auto person_b_entity = tree.findEntity("/a/b/person_b");
+        auto person_c_entity = tree.findEntity("/a/b/c/person_c");
+        auto person_a = person_a_entity->getObject<Person>();
+        auto person_b = person_b_entity->getObject<Person>();
+        auto person_c = person_c_entity->getObject<Person>();
+        std::cout << "person_a:" << person_a->first_name << " \n";
+        std::cout << "person_b:" << person_b->first_name << " \n";
+        std::cout << "person_c:" << person_c->first_name << " \n";
+
+        for (auto&& p : obj1->persons) {
+            std::cout << "obj1 persons:" << p->first_name << p->last_name << "\n";
+        }
+        for (auto&& p : obj2->persons) {
+            std::cout << "obj2 persons:" << p->first_name << p->last_name << "\n";
+        }
+
+        // 使用 SummationVisitor 求和
         SummationVisitor summationVisitor;
         tree.accept(summationVisitor);
         std::cout << "Total Sum: " << summationVisitor.getTotalSum() << std::endl;
@@ -112,7 +190,5 @@ TEST_CASE("Basic Property") {
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
-
-    return 0;
 }
 
