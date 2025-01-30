@@ -11,7 +11,7 @@ public:
         auto wireObject = entity.getObject("Wire");
         if (wireObject) {
             auto wire = std::static_pointer_cast<Wire>(wireObject);
-            wire->Bind();
+            wire->bind();
         }
 
         Visitor<void>::visit(entity, level);

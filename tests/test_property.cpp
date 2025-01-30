@@ -122,9 +122,9 @@ private:
     int totalSum_ = 0;
 };
 
-REGISTER_OBJECT(CustomObject)
-REGISTER_OBJECT(Person)
-REGISTER_OBJECT(CustomTop)
+//REGISTER_OBJECT(CustomObject)
+//REGISTER_OBJECT(Person)
+//REGISTER_OBJECT(CustomTop)
 
 TEST_CASE("Basic Property") {
     // 创建 TypeManager 实例并注册 CustomObject
@@ -152,7 +152,7 @@ TEST_CASE("Basic Property") {
         auto obj1 = entity.getObject<CustomObject>();
         CHECK(obj1 != nullptr);
 
-        auto obj2 = entity.getChild("c")->getObject<CustomObject>();
+        auto obj2 = entity.getChild("c").getObject<CustomObject>();
         CHECK(obj2 != nullptr);
 
         CHECK(obj1->intval == 30);
@@ -168,9 +168,9 @@ TEST_CASE("Basic Property") {
         auto person_a_entity = tree.findEntity("/a/b/person_a");
         auto person_b_entity = tree.findEntity("/a/b/person_b");
         auto person_c_entity = tree.findEntity("/a/b/c/person_c");
-        auto person_a = person_a_entity->getObject<Person>();
-        auto person_b = person_b_entity->getObject<Person>();
-        auto person_c = person_c_entity->getObject<Person>();
+        auto person_a = person_a_entity.getObject<Person>();
+        auto person_b = person_b_entity.getObject<Person>();
+        auto person_c = person_c_entity.getObject<Person>();
         std::cout << "person_a:" << person_a->first_name << " \n";
         std::cout << "person_b:" << person_b->first_name << " \n";
         std::cout << "person_c:" << person_c->first_name << " \n";

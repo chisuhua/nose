@@ -5,37 +5,36 @@
 #include "EntityIntern.h"
 #include <stdexcept>
 #include <rfl.hpp>
+#include "Registry.h"
 
 class Wire;
 
-struct WireParam {
+struct WireData {
     EntityHashType entity_hash;
-    std::shared_ptr<PortParam> master_;
-    std::shared_ptr<PortParam> slave_;
+    ObjPtr<Port> master_;
+    ObjPtr<Port> slave_;
     PortRole role_;
     uint64_t test_only;
 };
 
 class Wire {
 public:
-    using GenericType = std::shared_ptr<WireParam>;
+    using GenericType = std::shared_ptr<WireData>;
     GenericType generic_;
 
-    static std::shared_ptr<Wire> GetInstance(GenericType generic) {
-        auto entity = EntityRef::getEntityByHash(generic->entity_hash);
-        return entity.getObject<Wire>();
-    }
+    explicit Wire(GenericType generic) 
+        : generic_(generic) {}
 
-    explicit Wire(GenericType generic);
-    Wire() = delete;
-
+    //static std::shared_ptr<Wire> GetInstance(GenericType generic) {
+        //auto entity = EntityRef::getEntityByHash(generic->entity_hash);
+        //return entity.getObject<Wire>();
+    //}
     virtual void bind() {
-        if (!generic_->master_ or !generic_->slave_) {
+        auto master_port = generic_->master_;
+        auto slave_port = generic_->slave_;
+        if (!master_port.ptr() or !slave_port.ptr()) {
             throw std::runtime_error("Insufficient connected ports for binding");
         }
-
-        auto master_port = Port::GetInstance(generic_->master_);
-        auto slave_port = Port::GetInstance(generic_->slave_);
 
         if (master_port->getRole() != PortRole::Master || slave_port->getRole() != PortRole::Slave) {
             throw std::runtime_error("Invalid port roles for binding");
@@ -45,16 +44,25 @@ public:
         slave_port->bind(master_port);
     }
 
-    void setMasterPort(std::shared_ptr<Port> master) {
-        generic_->master_ = master->generic_;
+    void setMasterPort(ObjPtr<Port> master) {
+        generic_->master_ = master;
     }
 
-    void setSlavePort(std::shared_ptr<Port> slave) {
-        generic_->master_ = slave->generic_;
+    void setSlavePort(ObjPtr<Port> slave) {
+        generic_->master_ = slave;
     }
+
+    ObjPtr<Port> getMasterPort() {
+        return generic_->master_;
+    }
+
+    ObjPtr<Port> getSlavePort() {
+        return generic_->slave_;
+    }
+
 
     uint64_t test_only;
-    std::vector<Port> connect_;
+    //std::vector<Port> connect_;
 };
 
 // ValueType ParseConnection(const std::string& valueStr) {
@@ -64,10 +72,10 @@ public:
 
 REFL_AUTO(
     type(Wire),
-    field(generic_),
-    field(test_only),
-    field(connect_)
+    field(test_only)
+    //field(connect_)
 );
+REGISTER_OBJECT(Wire)
 
 #endif // W
 

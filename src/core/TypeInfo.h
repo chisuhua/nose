@@ -24,6 +24,33 @@ struct has_generic_t<T, std::void_t<typename T::GenericType>> : std::true_type {
 template<typename T>
 inline constexpr bool has_generic_v = has_generic_t<T>::value;
 
+template<typename T, typename = void>
+struct has_owner_t : std::false_type {};
+
+// Specialization that will be selected when T has a member type SubType.
+template<typename T>
+struct has_owner_t<T, std::void_t<typename T::OwnerType>> : std::true_type {};
+
+// Helper variable template for easier use
+template<typename T>
+inline constexpr bool has_owner_v = has_owner_t<T>::value;
+
+// 提取 GenericType 的结构模板
+template<typename T, typename = void>
+struct ExtractGenericType {
+    // 默认情况下不做任何事情
+};
+
+// 特化版本：当 T 有 GenericType 成员类型时
+template<typename T>
+struct ExtractGenericType<T, std::enable_if_t<has_generic_v<T>>> {
+    using type = typename T::GenericType;
+};
+
+// 提取类型别名的便捷定义
+template<typename T>
+using ExtractedGenericType = typename ExtractGenericType<T>::type;
+
 
 class TypeInfo
 {

@@ -1,5 +1,5 @@
 #include "Entity.h"
-#include "Registry.h"
+//#include "Registry.h"
 #include "TypeManager.h"
 #include "Visitor.h"
 #include <optional>
@@ -25,6 +25,13 @@ std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name, std::option
     auto obj = getObject(type_name);
     if (obj) return obj;
     objects_[type_name] = TypeManager::instance().createStorageObject(type_name, EntityRef(shared_from_this()), rfl_generic);
+    return objects_[type_name];
+}
+
+std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic) {
+    auto obj = getObject(type_name);
+    if (obj) return obj;
+    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, EntityRef(shared_from_this()), generic);
     return objects_[type_name];
 }
 

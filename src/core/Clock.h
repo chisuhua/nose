@@ -1,26 +1,34 @@
-#pragma once
+#ifndef CLOCK_H
+#define CLOCK_H
 #include <vector>
 #include <string>
 #include <memory>
-#include <sstream>
 #include <regex>
 #include <map>
 #include <stdexcept>
-#include <iostream>
 #include "Component.h"
 #include "Channel.h"
-#include "Registry.h"
 
+class Clock ;
+
+struct ClockData {
+    EntityHashType entity_hash;
+    uint64_t freq_;
+    std::vector<ObjPtr<Component>> components_;
+    std::vector<ObjPtr<Channel>> channels_;
+};
 
 class Clock {
 public:
-    uint64_t freq_;
-    std::vector<std::shared_ptr<Component>> components_;
-    std::vector<std::shared_ptr<Channel>> channels_;
+    using GenericType = std::shared_ptr<ClockData>;
+    GenericType generic_;
 
-    Clock() : freq_(0) {}
+    explicit Clock(GenericType generic) 
+        : generic_(generic) {
+            if (freq_ != 0) { generic->freq_ = freq_;}
+        }
 
-    void parseFrequency(const std::string& freqStr) {
+    static uint64_t parseFrequency(const std::string& freqStr) {
         static const std::map<std::string, uint64_t> suffixes = {
             {"K", 1000},
             {"M", 1000000},
@@ -36,9 +44,9 @@ public:
 
             auto it = suffixes.find(suffix);
             if (it != suffixes.end()) {
-                freq_ = base * it->second;
+                return base * it->second;
             } else {
-                freq_ = base;
+                return base;
             }
         } else {
             throw std::invalid_argument("Invalid frequency format");
@@ -46,14 +54,16 @@ public:
     }
 
     void tick() {
-        for (auto& component : components_) {
+        for (auto& component : generic_->components_) {
             component->tick();
         }
 
-        for (auto& channel : channels_) {
+        for (auto& channel : generic_->channels_) {
             channel->tick();
         }
     }
+
+    uint64_t freq_ {0};
 };
 
 //ValueType ParseComponents(const std::string& valueStr) {
@@ -66,8 +76,8 @@ public:
 
 REFL_AUTO(
     type(Clock),
-    field(freq_),
-    field(components_),
-    field(channels_)
+    field(freq_, Property(&Clock::parseFrequency))
     )
+REGISTER_OBJECT(Clock)
 
+#endif

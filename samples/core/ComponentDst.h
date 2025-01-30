@@ -1,10 +1,15 @@
-#pragma once
-#include "Registry.h"
+#ifndef COMPONENTDST_H
+#define COMPONENTDST_H
+
 #include "Component.h"
 
 class ComponentDst : public Component {
 public:
-    ComponentDst() = default;
+    using GenericType = std::shared_ptr<ComponentData>;
+
+    explicit ComponentDst(GenericType generic) 
+        : Component(generic) {}
+
 
     void portNotified(const std::string& portName) override {
         Component::portNotified(portName);
@@ -22,3 +27,4 @@ REFL_AUTO(
     );
 
 REGISTER_OBJECT(ComponentDst)
+#endif

@@ -3,56 +3,42 @@
 
 #include <memory>
 #include <refl.hpp>
+#include "Object.h"
 #include "EntityIntern.h"
 #include "Property.h"
+#include "Object.h"
+#include "Registry.h"
 
 enum class PortRole { Master, Slave };
 PortRole parse_role(std::string_view str) ;
 
-class Port;
-
-struct PortParam {
-    EntityHashType entity_hash;
-    std::shared_ptr<PortParam> peer_;
-    PortRole role_;
-    //std::deque<std::any> dataQueue_;
-    std::deque<rfl::Generic> dataQueue_;
-};
+struct PortGeneric;
 
 class Port {
 public:
-    using GenericType = std::shared_ptr<PortParam>;
+    using GenericType = std::shared_ptr<PortGeneric>;
     GenericType generic_;
 
-    static std::shared_ptr<Port> GetInstance(GenericType generic) {
-        auto entity = EntityRef::getEntityByHash(generic->entity_hash);
-        return entity.getObject<Port>();
-    }
+    explicit Port(GenericType generic) 
+        : generic_(generic) {}
 
-    explicit Port(GenericType generic);
-    Port() = delete;
-    // TODO fix to delete generic_
-    ~Port() = default;
 
-    const GenericType& getGeneric() const { return generic_; }
-    void setGeneric(GenericType generic) { generic_ = generic; }
+    void bind(ObjPtr<Port> peer) ;
 
-    void bind(std::shared_ptr<Port> peer) {
-        generic_->peer_ = peer->getGeneric();
-    }
+    void setRole(PortRole role) ;
 
-    void setRole(PortRole role) {
-        generic_->role_ = role;
-    }
+    PortRole getRole() const ;
 
-    PortRole getRole() const {
-        return generic_->role_;
-    }
+    void addData(rfl::Generic data) ;
+    bool hasData() const ;
+
+    GenericRef receiveData() ;
+
+    ObjPtr<Port> peer() ;
 
     template <typename T>
     void send(const T& data) {
-        assert(generic_->peer_);
-        generic_->peer_->dataQueue_.push_back(rfl::to_generic(data));
+        peer()->addData(rfl::to_generic(data));
     }
 
     template <typename T>
@@ -64,14 +50,6 @@ public:
         throw std::runtime_error("No data available to receive");
     }
 
-    bool hasData() const {
-        return !generic_->dataQueue_.empty();
-    }
-
-    //std::unique_ptr<Port> clone() const {
-        //return std::make_unique<Port>(*this);
-    //}
-
     void addObserver(std::function<void()> observer) {
         observers_.push_back(observer);
     }
@@ -82,28 +60,32 @@ public:
         }
     }
 
-
-    GenericRef receiveData() {
-        if (!generic_->dataQueue_.empty()) {
-            GenericRef data = generic_->dataQueue_.front();
-            generic_->dataQueue_.pop_front();
-            return data;
-        }
-        throw std::runtime_error("No data available to receive");
-    }
-
-    //std::shared_ptr<Port> peer_ {nullptr};
-    //PortRole role_;
-    //std::deque<std::any> dataQueue_;
-    //std::deque<GenericRef> dataQueue_;
-
     // 观察者列表
     std::vector<std::function<void()>> observers_;
 
-    //Port(const Port&) = delete;
-    //Port& operator=(const Port&) = delete;
+    Port() = default;
+    Port& operator=(const Port&) = delete;
 };
 
+struct PortGeneric {
+    using OwnerType = Port;
+    EntityHashType entity_hash;
+    ObjPtr<Port> peer_;
+    //std::shared_ptr<ObjectRef> peer_;
+    PortRole role_;
+    //std::deque<std::any> dataQueue_;
+    std::deque<rfl::Generic> dataQueue_;
+};
+
+
+
+ REFL_AUTO(
+    type(Port),
+    field(generic_)
+    )
+REGISTER_OBJECT(Port)
+
+#endif // PORT_H
 
 
 
@@ -159,11 +141,5 @@ public:
         //return *this;
     //}
 
- REFL_AUTO(
-    type(Port),
-    field(generic_)
-    )
 
 
-
-#endif // PORT_H

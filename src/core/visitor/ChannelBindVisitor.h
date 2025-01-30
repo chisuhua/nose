@@ -15,15 +15,15 @@ public:
         auto channelObject = entity.getObject("Channel");
         if (channelObject) {
             auto channel = std::static_pointer_cast<Channel>(channelObject);
-            for (const auto& portPair : channel->connect_) {
-                auto port = portPair.get();
-                if (port) {
-                    // 注册观察者，当端口发生变化时通知通道
-                    port->addObserver([channel, portName = port->getRole() == PortRole::Master ? "Master" : "Slave"]() {
-                        channel->portNotified(portName);
-                    });
-                }
-            }
+            auto master = channel->getMasterPort();
+            master->addObserver([channel, portName = master->getRole() == PortRole::Master ? "Master" : "Slave"]() {
+                channel->portNotified(portName);
+            });
+
+            auto slave = channel->getMasterPort();
+            slave->addObserver([channel, portName = slave->getRole() == PortRole::Master ? "Master" : "Slave"]() {
+                channel->portNotified(portName);
+            });
         }
 
         Visitor<void>::visit(entity, level);
@@ -36,4 +36,3 @@ private:
 };
 
 #endif // CHANNELBINDVISITOR_H
-

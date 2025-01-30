@@ -1,21 +1,15 @@
+#include "Object.h"
 #include "doctest/doctest.h"
 #include "EntityIntern.h"
 #include "Port.h"
 
 TEST_CASE("Port functionality") {
     // 创建两个 Port 实例
-    EntityRef entity_port1("port1");
-    EntityRef entity_port2("port2");
+    EntityRef entity_port1 = EntityRef::make("/port1");
+    EntityRef entity_port2 = EntityRef::make("/port2");
 
-    Port::GenericType port1_generic;
-    Port::GenericType port2_generic;
-
-    auto generic_obj1 = rfl::to_generic(port1_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
-    auto generic_obj2 = rfl::to_generic(port2_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
-                                                       //
-    auto port1 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj1));
-    auto port2 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj2));
-
+    auto port1 = entity_port1.make_object<Port>();
+    auto port2 = entity_port2.make_object<Port>();
 
     port1->setRole(PortRole::Master);
     port2->setRole(PortRole::Slave);

@@ -2,6 +2,7 @@
 #define ENTITY_H
 
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -16,13 +17,6 @@
 
 template<typename T>
 class Visitor;
-
-class EntityNull {
-public:
-    using ObjectId = uint32_t;
-    using EntityId = uint32_t;
-};
-
 
 class Entity : public std::enable_shared_from_this<Entity> {
 public:
@@ -87,19 +81,22 @@ public:
         return nullptr;
     }
 
+    template <typename T, typename ObjType>
+    std::shared_ptr<T> getOrCreateObject(std::shared_ptr<ObjType> generic) {
+        auto obj = getObject<T>();
+        if (obj) return obj;
+        auto type_name = TypeInfo::getTypeName<T>();
+
+        return std::static_pointer_cast<T>(getOrCreateObject(type_name, std::static_pointer_cast<void>(generic)));
+    }
+
     template <typename T>
     std::shared_ptr<T> getOrCreateObject(std::optional<GenericRef> rfl_generic) {
         auto obj = getObject<T>();
         if (obj) return obj;
         auto type_name = TypeInfo::getTypeName<T>();
 
-        if constexpr(has_generic_v<T>) {
-            auto obj = getOrCreateObject(type_name, rfl_generic);
-            return std::static_pointer_cast<T>(obj);
-        } else  {
-            auto obj = getOrCreateObject(type_name, std::nullopt);
-            return std::static_pointer_cast<T>(obj);
-        }
+        return std::static_pointer_cast<T>(getOrCreateObject(type_name, rfl_generic));
     }
 
 
@@ -113,6 +110,7 @@ public:
     }
 
     std::shared_ptr<void> getOrCreateObject(StringRef type_name, std::optional<GenericRef> rfl_generic);
+    std::shared_ptr<void> getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic);
 
     const auto& getChildren() const { return children_; }
 

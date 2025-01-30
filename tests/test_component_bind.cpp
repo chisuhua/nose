@@ -1,22 +1,26 @@
 #include "doctest/doctest.h"
 #include "ComponentBindVisitor.h"
-#include <iostream>
+#include "Component.h"
+#include "Port.h"
+#include "Tree.h"
 
 TEST_CASE("ComponentBindVisitor functionality") {
-    // 创建 Tree 实例
     Tree tree;
+    EntityRef entity = tree.getRoot(); 
 
     // 创建 Entity 实例并添加到 Tree 中
-    auto entity1 = std::make_shared<Entity>("entity");
-    auto component1 = std::make_shared<Component>();
-    auto port1 = std::make_shared<Port>(PortRole::Master);
-    auto port2 = std::make_shared<Port>(PortRole::Slave);
+    auto component1 = entity.make_object<Component>();
+
+    auto port1 = entity.make_object<Port>();
+    auto port2 = entity.make_object<Port>();
+
+    port1->setRole(PortRole::Master);
+    port2->setRole(PortRole::Slave);
+
     component1->addPort("port1", port1);
     component1->addPort("port2", port2);
-    port1->bind(port2.get());
+    port1->bind(port2);
 
-    entity1->setObject("Component", component1);
-    tree.setCurrent(entity1);
 
     // 创建 ComponentBindVisitor 实例
     ComponentBindVisitor visitor;
@@ -36,7 +40,7 @@ TEST_CASE("ComponentBindVisitor functionality") {
     component1->tick();
 
     // 检查端口是否已更新
-    CHECK(component1->portsUpdated_["port1"] == true);
-    CHECK(component1->portsUpdated_["port2"] == true);
+    CHECK(component1->isPortUpdated("port1") == true);
+    CHECK(component1->isPortUpdated("port2") == true);
 }
 

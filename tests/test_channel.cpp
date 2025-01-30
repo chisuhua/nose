@@ -3,28 +3,32 @@
 #include <iostream>
 
 TEST_CASE("Channel functionality") {
-    // 创建 Channel 实例
-    Channel channel;
+    EntityRef entity_channel = EntityRef::make("/channel");
 
-    // 添加端口
-    auto port1 = std::make_unique<Port>(PortRole::Master);
-    auto port2 = std::make_unique<Port>(PortRole::Slave);
-    channel.connect_.push_back(std::move(port1));
-    channel.connect_.push_back(std::move(port2));
+    EntityRef entity_port1 = EntityRef::make("/port1");
+    EntityRef entity_port2 = EntityRef::make("/port2");
+
+    // 创建 Channel 实例
+    auto channel = entity_channel.make_object<Channel>();
+    auto port1 = entity_port1.make_object<Port>();
+    auto port2 = entity_port2.make_object<Port>();
+
+    channel->setMasterPort(port1);
+    channel->setSlavePort(port2);
 
     // 绑定端口
-    channel.Bind();
+    channel->bind();
 
     // 发送和接收数据
-    channel.masterPort_->send(42);
-    CHECK(channel.slavePort_->hasData());
-    CHECK(channel.slavePort_->receive<int>() == 42);
+    channel->getMasterPort()->send(42);
+    CHECK(channel->getSlavePort()->hasData());
+    CHECK(channel->getSlavePort()->receive<int>() == 42);
 
-    channel.slavePort_->send(std::string("Hello, World!"));
-    CHECK(channel.masterPort_->hasData());
-    CHECK(channel.masterPort_->receive<std::string>() == "Hello, World!");
+    channel->getSlavePort()->send(std::string("Hello, World!"));
+    CHECK(channel->getMasterPort()->hasData());
+    CHECK(channel->getMasterPort()->receive<std::string>() == "Hello, World!");
 
     // 模拟时钟更新
-    channel.tick();
+    channel->tick();
 }
 

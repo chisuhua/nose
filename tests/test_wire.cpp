@@ -2,26 +2,15 @@
 #include "Wire.h"
 
 TEST_CASE("Wire functionality") {
-    EntityRef entity_wire("wire");
-
-    Wire::GenericType wire_generic;
-
-    auto generic_wire = rfl::to_generic(wire_generic);
-
-    auto wire = entity_wire.getOrCreateObject<Wire>(std::cref(generic_wire));
-
+    EntityRef entity_wire = EntityRef::make("/wire");
     // 添加端口
-    EntityRef entity_port1("port1");
-    EntityRef entity_port2("port2");
+    EntityRef entity_port1 = EntityRef::make("/port1");
+    EntityRef entity_port2 = EntityRef::make("/port2");
 
-    Port::GenericType port1_generic;
-    Port::GenericType port2_generic;
-
-    auto generic_obj1 = rfl::to_generic(port1_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
-    auto generic_obj2 = rfl::to_generic(port2_generic); // 假设这是一个左值引用或具有足够长生命周期的对象
-                                                       //
-    auto port1 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj1));
-    auto port2 = entity_port1.getOrCreateObject<Port>(std::cref(generic_obj2));
+    auto wire = entity_wire.make_object<Wire>();
+    auto port1 = entity_port1.make_object<Port>();
+    auto port2 = entity_port2.make_object<Port>();
+    //auto port2 = ObjPtr<Port>::make(entity_port1.getOrCreateObject<Port>(std::cref(generic_obj2))).value();
 
 
     wire->setMasterPort(port1);

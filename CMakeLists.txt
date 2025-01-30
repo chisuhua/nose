@@ -57,6 +57,8 @@ set(core_files
   src/core/EntityIntern.h
   src/core/Storage.h
   src/core/Registry.h
+  src/core/Object.h
+  src/core/ObjectRflParser.h
   src/core/loader/IniLoader.h
   src/core/visitor/Visitor.h
   src/core/visitor/ObjectBuildVisitor.h
@@ -76,21 +78,21 @@ target_include_directories(nose PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(nose PUBLIC reflectcpp)
 
 # 编译 main.cpp 作为 sample 可执行文件
-#add_executable(sample samples/core/main.cpp)
-#target_link_libraries(sample PRIVATE nose)
+add_executable(sample samples/core/main.cpp)
+target_link_libraries(sample PRIVATE nose)
 
 # 编译和运行测试用例
 option(BUILD_DOCTEST "Build with doctest support" ON)
 if(BUILD_DOCTEST)
   set(test_files
+    tests/test_property.cpp
     tests/test_basic.cpp
     tests/test_port.cpp
     tests/test_wire.cpp
     tests/test_component.cpp
     tests/test_channel.cpp
-    tests/test_port_bind.cpp
     tests/test_component_bind.cpp
-    tests/test_property.cpp
+    tests/test_typemanager.cpp
   )
 
   add_executable(tests ${test_files})

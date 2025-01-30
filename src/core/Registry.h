@@ -1,13 +1,15 @@
 #ifndef REGISTRY_H
 #define REGISTRY_H
+
 #include <map>
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include "Storage.h"
 #include "TypeManager.h"
+#include "rfl/Generic.hpp"
 #include "rfl/from_generic.hpp"
-
 
 class Registry {
 public:
@@ -18,7 +20,6 @@ public:
 
     Registry() = default;
 
-   
 public:
     std::unordered_map<StringRef, std::shared_ptr<void>> objectStorage;
 
@@ -29,8 +30,6 @@ public:
 
         //constexpr auto& ti = TypeInfo::Get<StorageType>();
         auto& ti = TypeInfo::Get<StorageType>();
-        //auto& ti = TypeInfo::Get<::refl::trait::remove_qualifiers_t<StorageType>>();
-
         auto it = objectStorage.find(ti.Name());
         if (it == objectStorage.end()) {
             auto storage = std::make_shared<StorageType>();
@@ -41,18 +40,45 @@ public:
     }
 
     template<typename O, typename E>
-    void registerObject(StringRef type_name) {
-        TypeManager::instance().registerStorageObjectCreator(type_name, [this](EntityRef entity, std::optional<GenericRef> rfl_generic) -> std::shared_ptr<void> {
-            if (rfl_generic) {
-                if constexpr(has_generic_v<O>) {
-                    using GenericType = typename O::GenericType;
-                    auto generic_obj =  getOrCreateObject<GenericType, E>(entity, rfl::from_generic<GenericType>(rfl_generic.value()).value());
-                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, generic_obj));
-                } else {
-                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, rfl::from_generic<O>(rfl_generic.value()).value())); 
-                }
-            } else return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity));
-        });
+    void registerObject() {
+        StringRef type_name = TypeManager::instance().registerType<O>();
+
+        if constexpr(has_generic_v<O>) {
+            using GenericType = typename O::GenericType::element_type;
+            Registry::getInstance()->registerObject<GenericType, E>();
+            // Object with has_generic_v is only created from generic object
+            StorageObjectCreator creator =  [this](EntityRef entity, std::any arg) -> std::shared_ptr<void> {
+                    auto generic = std::any_cast<std::shared_ptr<GenericType>>(arg);
+                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, generic));
+                };
+            TypeManager::instance().registerStorageObjectCreator(type_name, creator);
+        } else {
+            // Generic object create from rfl_generic
+            StorageObjectCreator_t<std::optional<GenericRef>> rfl_generic_creator = [this](EntityRef entity, std::optional<GenericRef> rfl_generic) -> std::shared_ptr<void> {
+                    if (rfl_generic) {
+                        O& obj_from_rfl = rfl::from_generic<O>(rfl_generic.value()).value();
+                        return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, obj_from_rfl));
+                    } else {
+                    }
+                };
+            TypeManager::instance().registerStorageObjectCreator(type_name, rfl_generic_creator);
+            // Generic object created by copy constructor
+            StorageObjectCreator copy_creator = [this](EntityRef entity, std::any&& arg) -> std::shared_ptr<void> {
+                    auto other = std::any_cast<O>(arg);
+                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, other));
+                };
+            TypeManager::instance().registerStorageObjectCreator(type_name, copy_creator);
+        }
+
+        //TypeManager::instance().registerStorageObjectCreator(type_name, [this](EntityRef entity, auto... args) -> std::shared_ptr<void> {
+            //if constexpr(has_generic_v<O>) {
+                //using GenericType = typename O::GenericType;
+                //auto generic_obj =  getOrCreateObject<GenericType, E>(entity, rfl::from_generic<GenericType>(rfl_generic.value()).value());
+                //return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, generic_obj));
+            //} else {
+                //return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, rfl::from_generic<O>(rfl_generic.value()).value())); 
+            //}
+        //});
 
     }
 
@@ -62,19 +88,22 @@ public:
         //static_assert(refl::trait::is_reflectable<O>::value, "Component must be reflectable.");
         getStorage<O, E>()->create(std::forward<Args>(args)...);
     }
+
     template<typename O, typename E, typename... Args>
-    std::shared_ptr<O> getOrCreateObject(EntityRef entity, Args&& ... args) {
+    std::shared_ptr<O> getOrCreateObject(EntityRef entity, Args&&... args) {
         // TODO has_generic_v and  is_reflectable
         //static_assert(refl::trait::is_reflectable<O>::value, "Component must be reflectable.");
         //typename E::ObjectId entity_id = getStorage<E>()->getObjectId(entity);
-        getStorage<O, E>()->getOrCreateObject(entity.getHash(), std::forward<Args>(args)...);
+        return getStorage<O, E>()->getOrCreateObject(entity.getHash(), std::forward<Args>(args)...);
     }
+
     template<typename O, typename E>
     std::shared_ptr<O> getObject(EntityRef entity) {
         static_assert(refl::trait::is_reflectable<O>::value, "Component must be reflectable.");
         typename E::ObjectId entity_id = getStorage<E>()->getObjectId(entity);
-        getStorage<O, E>()->getObject(entity_id);
+        return getStorage<O, E>()->getObject(entity_id);
     }
+
     template<typename O, typename E, typename... Args>
     void addObject(EntityRef entity, Args&&... args) {
         static_assert(refl::trait::is_reflectable<O>::value, "Component must be reflectable.");
@@ -98,21 +127,15 @@ public:
 template <typename O, typename E = Entity>
 struct ObjectRegistrar {
     ObjectRegistrar() {
-        StringRef type_name = TypeManager::instance().registerType<O>();
-        Registry::getInstance()->registerObject<O, E>(type_name);
-        if constexpr(has_generic_v<O>) {
-            using GenericType = typename O::GenericType;
-            StringRef generic_type_name = TypeManager::instance().registerType<GenericType>();
-            Registry::getInstance()->registerObject<GenericType, E>(generic_type_name);
-        }
+        Registry::getInstance()->registerObject<O, E>();
     }
 };
 
 #define REGISTER_NODE_OBJECT(O, ...) \
     do { \
-    REFL_AUTO(__VA_ARGS__) \
-    static ObjectRegistrar<O, Entity> auto_##O##_registrar(); \
-    }  while(0) 
+        REFL_AUTO(__VA_ARGS__) \
+        static ObjectRegistrar<O, Entity> auto_##O##_registrar(); \
+    } while(0)
 
 #define STRINGIFY_HELPER(...) #__VA_ARGS__
 #define STRINGIFY(x) STRINGIFY_HELPER x

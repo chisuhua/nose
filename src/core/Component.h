@@ -5,36 +5,53 @@
 #include <map>
 #include <memory>
 #include <string>
-#include "Registry.h"
 #include "Port.h"
+
+struct ComponentData {
+    // 端口映射
+    std::map<std::string,ObjPtr<Port>> ports_;
+    // 端口更新标志映射
+    std::map<std::string, bool> portsUpdated_;
+
+    ObjPtr<Port> slave_;
+    PortRole role_;
+    uint64_t test_only;
+};
 
 class Component {
 public:
-    // 端口映射
-    std::map<std::string, std::shared_ptr<Port>> ports_;
-    // 端口更新标志映射
-    std::map<std::string, bool> portsUpdated_;
+    using GenericType = std::shared_ptr<ComponentData>;
+    GenericType generic_;
+
+    explicit Component(GenericType generic) 
+        : generic_(generic) {}
+
 
     virtual ~Component() = default;
 
     // 添加端口
-    void addPort(const std::string& name, std::shared_ptr<Port> port) {
-        ports_[name] = port;
+    void addPort(const std::string& name, ObjPtr<Port> port) {
+        generic_->ports_[name] = port;
     }
 
     // 获取端口
-    std::shared_ptr<Port> getPort(const std::string& name) {
-        auto it = ports_.find(name);
-        if (it != ports_.end()) {
+    ObjPtr<Port> getPort(const std::string& name) {
+        auto it = generic_->ports_.find(name);
+        if (it != generic_->ports_.end()) {
             return it->second;
         }
-        return nullptr;
+        //return ObjPtr<Port>::make(nullptr);
     }
 
     // 端口通知
     virtual void portNotified(const std::string& portName) {
-        portsUpdated_[portName] = true;
+        generic_->portsUpdated_[portName] = true;
     }
+
+    virtual bool isPortUpdated(const std::string& portName) {
+        return generic_->portsUpdated_[portName];
+    }
+
 
     // 时钟更新
     virtual void tick() {
@@ -45,7 +62,7 @@ public:
 // 注册组件类型
 REFL_AUTO(
     type(Component),
-    field(ports_)
+    field(generic_)
 )
 
 #endif // COMPONENT_H

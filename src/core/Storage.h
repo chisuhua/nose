@@ -9,7 +9,14 @@
 #include <cstddef>
 #include <new> // std::launcher
 #include <cassert>
-#include "Object.h"
+#include "TypeInfo.h"
+
+class EntityNull {
+public:
+    using ObjectId = uint32_t;
+    using EntityId = uint32_t;
+};
+
 
 template<typename ObjectType, typename EntityType = EntityNull>
 class Storage {

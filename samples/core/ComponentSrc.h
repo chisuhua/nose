@@ -5,15 +5,17 @@
 
 class ComponentSrc : public Component {
 public:
-    ComponentSrc() = default;
+    using GenericType = std::shared_ptr<ComponentData>;
+
+    explicit ComponentSrc(GenericType generic) 
+        : Component(generic) {}
+
 
     void sendEvent(const Event& event, const std::string& portName) {
         //auto port = std::dynamic_pointer_cast<Port<bundle::ValidReady>>(getPort(portName));
-        auto port = std::dynamic_pointer_cast<Port>(getPort(portName));
-        if (port) {
-            port->send(event);
-            std::cout << "ComponentSrc sending event: data = " << event.data << ", valid = " << event.valid << std::endl;
-        }
+        auto port = getPort(portName);
+        port->send(event);
+        std::cout << "ComponentSrc sending event: data = " << event.data << ", valid = " << event.valid << std::endl;
     }
 
     void tick() override {
@@ -25,5 +27,6 @@ public:
 REFL_AUTO(
     type(ComponentSrc, bases<Component>)
     );
+
 REGISTER_OBJECT(ComponentSrc)
 

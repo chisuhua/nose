@@ -4,11 +4,8 @@
 #include <chrono>
 #include "TypeManager.h"
 #include "Clock.h"
-#include "Component.h"
-#include "Channel.h"
 #include "IniLoader.h"
 #include "Tree.h"
-#include "Visitor.h"
 #include "ObjectBuildVisitor.h"
 #include "PortBindVisitor.h"
 #include "ComponentBindVisitor.h"
@@ -19,22 +16,18 @@
 #include "ComponentSrc.h"
 #include "ComponentDst.h"
 
-    REGISTER_OBJECT(Wire)
-    REGISTER_OBJECT(Channel)
-    REGISTER_OBJECT(Clock)
 
-    REGISTER_OBJECT(Port)
 
 int main() {
     TypeManager& typeManager = TypeManager::instance();
-
+#if 1
     Tree tree;
     IniLoader loader(typeManager);
 
     try {
         loader.load("samples/core/config.ini", tree);
 
-        ObjectBuildVisitor builderVisitor(typeManager, Registry::getInstance());
+        ObjectBuildVisitor builderVisitor(typeManager);
         tree.accept(builderVisitor);
 
         ComponentBindVisitor componentBindVisitor;
@@ -62,7 +55,7 @@ int main() {
         std::future<void> future = std::async(std::launch::async, [&, dstUnit1] {
             std::this_thread::sleep_for(std::chrono::seconds(1));
             // auto dstPort = std::dynamic_pointer_cast<Port<bundle::ValidReady>>(dstUnit1->getPort("port1"));
-            auto dstPort = std::dynamic_pointer_cast<Port>(dstUnit1->getPort("port1"));
+            auto dstPort = dstUnit1->getPort("port1");
             //Event io;
             //*dstPort >> io;
             Event io = dstPort->receive<Event>();
@@ -81,7 +74,7 @@ int main() {
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
-
+#endif
     return 0;
 }
 

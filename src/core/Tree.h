@@ -6,7 +6,7 @@
 class Tree {
 public:
     Tree() 
-        : root_(EntityRef("/root", ""))
+        : root_(EntityRef("/", ""))
         , current_(root_)
     {}
 
