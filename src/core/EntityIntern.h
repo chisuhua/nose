@@ -75,8 +75,11 @@ public:
     EntityRef(const std::string& name, EntityRef parent)
         : EntityRef(name, parent.getPath())
     {}
+
     EntityRef(EntityPtr ptr)
-        : EntityRef(ptr->getName(), ptr->getParent()->getPath())
+        : ptr_(ptr ? (EntityPool::getInstance()->try_emplace(ptr->getName(), ptr->getParent()->getPath()))
+                   : nullptr)
+        //: EntityRef(ptr->getName(), ptr->getParent()->getPath())
     {}
 
     EntityRef() : ptr_(nullptr) {}
@@ -145,7 +148,9 @@ public:
     }
 
     EntityRef getChild(const std::string& name) const {
-        return EntityRef(ptr_->getChild(name));
+        auto entity_ptr = ptr_->getChild(name);
+        if (entity_ptr) return EntityRef(ptr_->getChild(name));
+        else return EntityRef();
     }
 
     void setParent(EntityRef parent) {

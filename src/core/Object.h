@@ -31,14 +31,6 @@ ObjPath represent as path:Type, like /a/b:Type1, /a/b:Type2
 
 using namespace rfl;
 
-template <class T>
-class ObjPath {
-    //std::string entity_path_;
-    //std::string type_name_;
-    StringRef entity_path_;
-    StringRef type_name_;
-};
-
 /// The ObjPtr class behaves very similarly to the shared_ptr, but unlike the
 /// unique_ptr, it is 100% guaranteed to be filled at all times (unless the user
 /// tries to access it after calling std::move does something else that is

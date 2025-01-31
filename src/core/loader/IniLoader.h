@@ -87,7 +87,7 @@ public:
                 auto child = current_entity.getChild(part);
                 if (!child) {
                     child = EntityRef(part, current_entity);
-                    if (is_current_object) {
+                    if (is_current_object and !value_str.empty()) {
                         child.setSelfTypeName(current_type_name);
                         child.setSerialize(current_type_name, value_str);
                         child.deserialize(current_type_name);
