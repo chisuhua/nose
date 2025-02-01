@@ -30,15 +30,14 @@ public:
         return oss.str();
     }
 
-    static std::string get_parent(const std::string& path) {
+    static std::string getParent(const std::string& path) {
         if (path.empty()) return "/";
         size_t pos = path.find_last_of('/');
-        if (pos == std::string::npos) return "/";
-        if (pos == 0) return "/";
+        if (pos == std::string::npos || pos == 0) return "/";
         return path.substr(0, pos);
     }
 
-    static std::string get_leafname(const std::string& path) {
+    static std::string getLeafName(const std::string& path) {
         if (path.empty()) return "";
         size_t pos = path.find_last_of('/');
         if (pos == std::string::npos) return path;
@@ -58,3 +57,4 @@ public:
 };
 
 #endif // PATHUTILS_H
+

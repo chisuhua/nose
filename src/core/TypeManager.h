@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <typeindex>
 #include <refl.hpp>
-#include "EntityIntern.h"
+#include "Path.h"
 #include "StringIntern.h"
 #include "Property.h"
 #include "TypeInfo.h"
@@ -21,8 +21,8 @@ using PropertiesSetter = void(*)(const std::shared_ptr<void>, ElementProperties&
 
 using ObjectCreator = std::function<std::shared_ptr<void>(std::optional<GenericRef>)>;
 template <typename T>
-using StorageObjectCreator_t = std::function<std::shared_ptr<void>(EntityRef, T)>;
-using StorageObjectCreator = std::function<std::shared_ptr<void>(EntityRef, std::any)>;
+using StorageObjectCreator_t = std::function<std::shared_ptr<void>(Path, T)>;
+using StorageObjectCreator = std::function<std::shared_ptr<void>(Path, std::any)>;
 
 class PropertyMeta {
 public:
@@ -61,7 +61,7 @@ public:
     }
 
     template <typename ArgType>
-    std::shared_ptr<void> createStorageObject(EntityRef entity, ArgType&& args) {
+    std::shared_ptr<void> createStorageObject(Path entity, ArgType&& args) {
         auto it = storage_object_creators_.find(typeid(ArgType));
         if (it == storage_object_creators_.end()) {
             throw std::runtime_error("creator not registered for this argument types\n");
@@ -70,8 +70,8 @@ public:
     }
 
     template <typename ArgType>
-    void registerStorageObjectCreator(std::function<std::shared_ptr<void>(EntityRef, ArgType arg)> creator) {
-        storage_object_creators_[typeid(ArgType)] = [creator](EntityRef entity, std::any arg) -> std::shared_ptr<void> {
+    void registerStorageObjectCreator(std::function<std::shared_ptr<void>(Path, ArgType arg)> creator) {
+        storage_object_creators_[typeid(ArgType)] = [creator](Path entity, std::any arg) -> std::shared_ptr<void> {
             return creator(entity, std::any_cast<ArgType>(arg));
         };
     }
@@ -249,36 +249,36 @@ public:
     }
 
     //template <typename... Args>
-    //std::shared_ptr<void> createStorageObject(StringRef type_name, EntityRef entity, Args&&... args) {
+    //std::shared_ptr<void> createStorageObject(StringRef type_name, Path entity, Args&&... args) {
         //return metadata.at(type_name).createStorageObject(entity, std::forward<Args>(args)...);
     //}
 
     //template <typename T, typename... Args>
-    //std::shared_ptr<T> createStorageObject(EntityRef entity, Args&&... args) {
+    //std::shared_ptr<T> createStorageObject(Path entity, Args&&... args) {
         //StringRef type_name = getTypeName<T>();
         //auto obj = metadata.at(type_name).createStorageObject(entity, std::forward<Args>(args)...);
         //return std::static_pointer_cast<T>(obj);
     //}
 
     //template <typename... Args>
-    //void registerStorageObjectCreator(StringRef type_name, std::function<std::shared_ptr<void>(EntityRef, Args...)> creator) {
+    //void registerStorageObjectCreator(StringRef type_name, std::function<std::shared_ptr<void>(Path, Args...)> creator) {
         //metadata.at(type_name).registerStorageObjectCreator<Args...>(creator);
     //}
 
     template <typename ArgType>
-    std::shared_ptr<void> createStorageObject(StringRef type_name, EntityRef entity, ArgType&& args) {
+    std::shared_ptr<void> createStorageObject(StringRef type_name, Path entity, ArgType&& args) {
         return metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
     }
 
     template <typename T, typename ArgType>
-    std::shared_ptr<T> createStorageObject(EntityRef entity, ArgType&& args) {
+    std::shared_ptr<T> createStorageObject(Path entity, ArgType&& args) {
         StringRef type_name = getTypeName<T>();
         auto obj = metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
         return std::static_pointer_cast<T>(obj);
     }
 
     template <typename ArgType>
-    void registerStorageObjectCreator(StringRef type_name, std::function<std::shared_ptr<void>(EntityRef, ArgType arg)> creator) {
+    void registerStorageObjectCreator(StringRef type_name, std::function<std::shared_ptr<void>(Path, ArgType arg)> creator) {
         metadata.at(type_name).registerStorageObjectCreator<ArgType>(creator);
     }
 

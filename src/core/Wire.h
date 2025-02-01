@@ -2,7 +2,7 @@
 #define WIRE_H
 
 #include "Port.h"
-#include "EntityIntern.h"
+#include "Path.h"
 #include <stdexcept>
 #include <rfl.hpp>
 #include "Registry.h"
@@ -26,7 +26,7 @@ public:
         : generic_(generic) {}
 
     //static std::shared_ptr<Wire> GetInstance(GenericType generic) {
-        //auto entity = EntityRef::getEntityByHash(generic->entity_hash);
+        //auto entity = Path::getEntityByHash(generic->entity_hash);
         //return entity.getObject<Wire>();
     //}
     virtual void bind() {

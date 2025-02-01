@@ -11,7 +11,7 @@ class ChannelBindVisitor : public Visitor<void> {
 public:
     explicit ChannelBindVisitor(Tree& tree) : tree_(tree) {}
 
-    void visit(EntityRef entity, int level) override {
+    void visit(Path entity, int level) override {
         auto channelObject = entity.getObject("Channel");
         if (channelObject) {
             auto channel = std::static_pointer_cast<Channel>(channelObject);

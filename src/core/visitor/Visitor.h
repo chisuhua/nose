@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <string>
-#include "EntityIntern.h"
+#include "Path.h"
 #include "StringIntern.h"
 
 template<typename T>
@@ -11,7 +11,7 @@ class Visitor {
 public:
     virtual ~Visitor() = default;
 
-    virtual void visit(EntityRef entity, int level) {
+    virtual void visit(Path entity, int level) {
         for (const auto& [key, child] : entity.getChildren()) {
             child->accept(*this, level + 1);
         }
@@ -20,9 +20,9 @@ public:
         }
     };
 
-    //virtual void visit(ConstEntityRef entity, int level) {
+    //virtual void visit(ConstPath entity, int level) {
         //for (const auto& [key, child] : entity.getChildren()) {
-            //// 假设 getChildren 返回的是 ConstEntityRef 类型
+            //// 假设 getChildren 返回的是 ConstPath 类型
             //child->accept(*this, level + 1); // 现在 accept 是 const 成员函数，因此可以在这里调用
         //}
         //for (const auto& [key, object] : entity.getObjects()) {

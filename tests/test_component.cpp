@@ -2,9 +2,9 @@
 #include "Component.h"
 
 TEST_CASE("Component functionality") {
-    EntityRef entity_port1 = EntityRef::make("/port1");
-    EntityRef entity_port2 = EntityRef::make("/port2");
-    EntityRef entity_component = EntityRef::make("/component");
+    Path entity_port1 = Path::make("/port1");
+    Path entity_port2 = Path::make("/port2");
+    Path entity_component = Path::make("/component");
 
     auto port1 = entity_port1.make_object<Port>();
     auto port2 = entity_port2.make_object<Port>();

@@ -3,10 +3,10 @@
 #include <iostream>
 
 TEST_CASE("Channel functionality") {
-    EntityRef entity_channel = EntityRef::make("/channel");
+    Path entity_channel = Path::make("/channel");
 
-    EntityRef entity_port1 = EntityRef::make("/port1");
-    EntityRef entity_port2 = EntityRef::make("/port2");
+    Path entity_port1 = Path::make("/port1");
+    Path entity_port2 = Path::make("/port2");
 
     // 创建 Channel 实例
     auto channel = entity_channel.make_object<Channel>();

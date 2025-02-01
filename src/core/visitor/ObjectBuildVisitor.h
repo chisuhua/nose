@@ -1,14 +1,14 @@
 #pragma once
 #include "Visitor.h"
 #include "Tree.h"
-#include "EntityIntern.h"
+#include "Path.h"
 #include "TypeManager.h"
 
 class ObjectBuildVisitor : public Visitor<void> {
 public:
     explicit ObjectBuildVisitor(TypeManager& typeManager) : typeManager_(typeManager) {}
 
-    void visit(EntityRef entity, int level) override {
+    void visit(Path entity, int level) override {
         for (const auto& [type_name, serialize] : entity.getSerializies()) {
             if (!entity.getObject(type_name)) {
                 // create obj from serialize first

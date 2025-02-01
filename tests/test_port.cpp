@@ -1,12 +1,12 @@
 #include "Object.h"
 #include "doctest/doctest.h"
-#include "EntityIntern.h"
+#include "Path.h"
 #include "Port.h"
 
 TEST_CASE("Port functionality") {
     // 创建两个 Port 实例
-    EntityRef entity_port1 = EntityRef::make("/port1");
-    EntityRef entity_port2 = EntityRef::make("/port2");
+    Path entity_port1 = Path::make("/port1");
+    Path entity_port2 = Path::make("/port2");
 
     auto port1 = entity_port1.make_object<Port>();
     auto port2 = entity_port2.make_object<Port>();

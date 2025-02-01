@@ -3,7 +3,7 @@
 
 #include "rfl/Result.hpp"
 //#include <refl.hpp>
-//#include "EntityIntern.h"
+//#include "Path.h"
 #include "TypeInfo.h"
 #include <stdexcept>
 #include <type_traits>
@@ -11,8 +11,8 @@
 
 
 /*
-EntityRef represent as path: /a/b, /a/b/c, /a/b/c/d
-ObjPath represent as path:Type, like /a/b:Type1, /a/b:Type2
+Path represent as path: /a/b, /a/b/c, /a/b/c/d
+Path represent as path:Type, like /a/b:Type1, /a/b:Type2
 /a/b:Type1
 /a/b:Type2
 /a/b/c:Type1
@@ -48,7 +48,7 @@ class ObjPtr<T, std::enable_if_t<!has_generic_v<T>>> {
     return ObjPtr<T>(std::make_shared<T>(std::forward<Args>(_args)...));
   }
 
-  //static ObjPtr<T> make(EntityRef entity, std::optional<GenericRef> rfl_generic = std::nullopt) {
+  //static ObjPtr<T> make(Path entity, std::optional<GenericRef> rfl_generic = std::nullopt) {
     //if (!entity.isValid()) {
       //return Error("entity is invalid.");
     //}
@@ -165,7 +165,7 @@ class ObjPtr<T, std::enable_if_t<has_generic_v<T>>> {
     return ObjPtr<T>(std::make_shared<T>(std::forward<Args>(_args)...));
   }
 
-  //static Result<ObjPtr<T>> make(EntityRef entity, std::optional<GenericRef> rfl_generic = std::nullopt) {
+  //static Result<ObjPtr<T>> make(Path entity, std::optional<GenericRef> rfl_generic = std::nullopt) {
     //if (!entity.isValid()) {
       //return Error("entity is invalid.");
     //}

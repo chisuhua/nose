@@ -1,50 +1,47 @@
-#pragma once
-#include <memory>
+#ifndef TREE_H
+#define TREE_H
 #include "PathUtils.h"
-#include "EntityIntern.h"
+#include "Path.h"
 
 class Tree {
 public:
     Tree() 
-        : root_(EntityRef("/", ""))
+        : root_(Path("/", ""))
         , current_(root_)
     {}
 
     Tree(std::string name)
-        : root_(EntityRef(name, ""))
+        : root_(Path(name, ""))
         , current_(root_)
     {
     }
 
-    EntityRef getRoot() const { return root_; }
-    EntityRef getCurrent() const { return current_; }
+    Path getRoot() const { return root_; }
+    Path getCurrent() const { return current_; }
 
-    void setCurrent(EntityRef current) { current_ = current; }
+    void setCurrent(Path current) { current_ = current; }
 
     void changeCurrent(const std::string& path) {
-        EntityRef start_entity = (path.front() == '/') ? root_ : current_;
+        Path start_entity = (path.front() == '/') ? root_ : current_;
         current_ = traverseToEntity(start_entity, path);
         if (!current_) {
             throw std::runtime_error("Path not found:" + path);
         }
     }
 
-    EntityRef findEntity(const std::string& path) const {
+    Path findEntity(const std::string& path) const {
         auto parts = PathUtils::split(path);
         auto current_entity = root_;
 
         for (const auto& part : parts) {
-            auto child = current_entity.getChild(part);
-            if (!child) {
-                return child;
-            }
+            auto child = Path(part, current_entity);
             current_entity = child;
         }
         return current_entity;
     }
 
     void accept(Visitor<void>& visitor, const std::string& path = "") {
-        EntityRef start_entity = (path.empty() || path.front() == '/') ? root_ : current_;
+        Path start_entity = (path.empty() || path.front() == '/') ? root_ : current_;
         auto target_entity = traverseToEntity(start_entity, path);
         if (!target_entity) {
             throw std::runtime_error("Path not found: " + path);
@@ -54,7 +51,7 @@ public:
 
 
 private:
-    EntityRef traverseToEntity(EntityRef start_entity, const std::string& path) {
+    Path traverseToEntity(Path start_entity, const std::string& path) {
         std::vector<std::string> parts = PathUtils::split(path);
         auto current = start_entity;
 
@@ -65,12 +62,7 @@ private:
                     throw std::runtime_error("No parent directory");
                 }
             } else {
-                auto child = current.getChild(part);
-                if (!child) {
-                    return EntityRef();
-                    //child = Entity(part, current.getPath());
-                    //current.addChild(child);
-                }
+                auto child = Path(part, current);
                 current = child;
             }
         }
@@ -78,6 +70,7 @@ private:
     }
 
     
-    EntityRef root_;
-    EntityRef current_;
+    Path root_;
+    Path current_;
 };
+#endif

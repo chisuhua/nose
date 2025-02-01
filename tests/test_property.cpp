@@ -146,13 +146,15 @@ TEST_CASE("Basic Property") {
         PrinterVisitor printerVisitor;
         tree.accept(printerVisitor);
 
-        auto entity = tree.findEntity("/a/b");
-        CHECK(entity.isValid());
+        auto path_a_b = tree.findEntity("/a/b");
+        CHECK(path_a_b.isValid());
 
-        auto obj1 = entity.getObject<CustomObject>();
+        auto obj1 = path_a_b.getObject<CustomObject>();
         CHECK(obj1 != nullptr);
 
-        auto obj2 = entity.getChild("c").getObject<CustomObject>();
+        auto path_a_b_c = Path("c", path_a_b);
+
+        auto obj2 = path_a_b_c.getObject<CustomObject>();
         CHECK(obj2 != nullptr);
 
         CHECK(obj1->intval == 30);

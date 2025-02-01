@@ -4,7 +4,7 @@
 #include <memory>
 #include <refl.hpp>
 #include "Object.h"
-#include "EntityIntern.h"
+#include "Path.h"
 #include "Property.h"
 #include "Object.h"
 #include "Registry.h"

@@ -24,20 +24,20 @@ void Entity::accept(Visitor<void>& visitor, int level) const {
 std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name, std::optional<GenericRef> rfl_generic) {
     auto obj = getObject(type_name);
     if (obj) return obj;
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, EntityRef(shared_from_this()), rfl_generic);
+    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), rfl_generic);
     return objects_[type_name];
 }
 
 std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic) {
     auto obj = getObject(type_name);
     if (obj) return obj;
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, EntityRef(shared_from_this()), generic);
+    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), generic);
     return objects_[type_name];
 }
 
 void Entity::deserialize(StringRef type_name) {
     auto generic = objectsInSerialize_[type_name];
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, EntityRef(shared_from_this()), std::make_optional(generic));
+    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), std::make_optional(generic));
 }
 
 //template <typename T>

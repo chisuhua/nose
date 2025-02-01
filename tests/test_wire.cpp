@@ -2,10 +2,10 @@
 #include "Wire.h"
 
 TEST_CASE("Wire functionality") {
-    EntityRef entity_wire = EntityRef::make("/wire");
+    Path entity_wire = Path::make("/wire");
     // 添加端口
-    EntityRef entity_port1 = EntityRef::make("/port1");
-    EntityRef entity_port2 = EntityRef::make("/port2");
+    Path entity_port1 = Path::make("/port1");
+    Path entity_port2 = Path::make("/port2");
 
     auto wire = entity_wire.make_object<Wire>();
     auto port1 = entity_port1.make_object<Port>();

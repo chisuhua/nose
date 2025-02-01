@@ -25,7 +25,7 @@ public:
     using EntityPtr = std::shared_ptr<Entity>;
     using ConstEntityPtr = std::shared_ptr<const Entity>;
 
-    explicit Entity(const std::string& name, std::uint32_t hash) : name_(name), is_object_(false), hash_(hash) {}
+    explicit Entity(const std::string& name, std::uint32_t hash) : name_(name), hash_(hash) {}
 
     const std::string& getName() const { return name_; }
 
@@ -164,18 +164,10 @@ public:
         return current_entity;
     }
 
-    bool isSelfObject() const { return is_object_; }
-    StringRef getSelfTypeName() const { return type_name_; }
-    void setSelfTypeName(StringRef type_name) { 
-        type_name_ = type_name; 
-        is_object_ = true;
-    }
-
     std::uint32_t getHash() { return hash_;}
 
 private:
     std::string name_;
-    bool is_object_;
     std::uint32_t hash_;
     std::unordered_map<std::string, EntityPtr> children_;
     std::unordered_map<StringRef, std::shared_ptr<void>> objects_;

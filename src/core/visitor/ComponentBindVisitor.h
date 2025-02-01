@@ -9,12 +9,12 @@ class ComponentBindVisitor : public Visitor<void> {
 public:
     //explicit ComponentBindVisitor(Tree& tree) : tree_(tree) {}
 
-    void visit(EntityRef entity, int level) override {
+    void visit(Path entity, int level) override {
         auto component = std::static_pointer_cast<Component>(entity.getObject(entity.getName()));
         if (component) {
             for (const auto& [key, childEntity] : entity.getChildren()) {
-                auto childEntityRef = EntityRef(childEntity);
-                auto port = childEntityRef.make_object<Port>();
+                auto childPath = Path(childEntity);
+                auto port = childPath.make_object<Port>();
                 //if (port_entity) {
                     component->addPort(key, port);
 

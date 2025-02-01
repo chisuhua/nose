@@ -6,7 +6,7 @@
 
 TEST_CASE("ComponentBindVisitor functionality") {
     Tree tree;
-    EntityRef entity = tree.getRoot(); 
+    Path entity = tree.getRoot(); 
 
     // 创建 Entity 实例并添加到 Tree 中
     auto component1 = entity.make_object<Component>();

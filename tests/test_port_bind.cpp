@@ -8,7 +8,7 @@
 
 TEST_CASE("PortBindVisitor functionality") {
     // 创建 Tree 实例
-    EntityRef entity_channel = EntityRef::make("/channel");
+    Path entity_channel = Path::make("/channel");
 
     channel1->connect_.push_back(std::make_unique<Port>(PortRole::Master));
     channel1->connect_.push_back(std::make_unique<Port>(PortRole::Slave));

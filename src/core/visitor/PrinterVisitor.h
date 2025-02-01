@@ -10,7 +10,7 @@ public:
     PrinterVisitor() {}
     virtual ~PrinterVisitor() = default;
 
-    void visit(EntityRef entity, int level) override {
+    void visit(Path entity, int level) override {
         printEntity(entity, level);
         Visitor<void>::visit(entity, level);
     }
@@ -18,7 +18,7 @@ public:
     void visitObject(const std::shared_ptr<void>&, StringRef) override {}
 
 private:
-    void printEntity(EntityRef entity, int level) {
+    void printEntity(Path entity, int level) {
         std::string indent(level * 2, ' ');
         std::cout << indent << entity.getName() << "\n";
     }
