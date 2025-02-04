@@ -16,10 +16,10 @@ public:
     {
     }
 
-    Path getRoot() const { return root_; }
-    Path getCurrent() const { return current_; }
+    const Path& getRoot() const { return root_; }
+    const Path& getCurrent() const { return current_; }
 
-    void setCurrent(Path current) { current_ = current; }
+    void setCurrent(const Path& current) { current_ = current; }
 
     void changeCurrent(const std::string& path) {
         Path start_entity = (path.front() == '/') ? root_ : current_;

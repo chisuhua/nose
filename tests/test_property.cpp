@@ -122,14 +122,24 @@ private:
     int totalSum_ = 0;
 };
 
-//REGISTER_OBJECT(CustomObject)
-//REGISTER_OBJECT(Person)
+REGISTER_OBJECT(CustomObject)
+REGISTER_OBJECT(Person)
 //REGISTER_OBJECT(CustomTop)
 
 TEST_CASE("Basic Property") {
-    // 创建 TypeManager 实例并注册 CustomObject
     TypeManager& typeManager = TypeManager::instance();
-    //typeManager.registerType<CustomTop, false>();
+
+    //StorageObjectCreator createStorageObjectGeneric = [](Path entity, std::any args) -> std::shared_ptr<void> {
+        //auto [first_name, last_name, age] = std::any_cast<std::tuple<std::string, std::string, int>>(args);
+        //auto generic_obj = std::make_shared<Person>();
+        //generic_obj->first_name = first_name;
+        //generic_obj->last_name = last_name;
+        //generic_obj->age = age;
+        //return std::static_pointer_cast<void>(generic_obj);
+    //};
+
+    //typeManager.registerStorageObjectCreator("Person", createStorageObjectGeneric);
+
 
     // 创建 Tree 实例并加载配置
     Tree tree;

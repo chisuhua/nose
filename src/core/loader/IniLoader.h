@@ -46,23 +46,26 @@ public:
         file.close();
     }
 
-    Path createPath(Path &start_path, const std::string &subpath_str) {
+    Path createPath(const Path &start_path, const std::string &subpath_str) {
         auto parts = PathUtils::split(subpath_str);
         auto current_path = start_path;
-        bool is_object_path = current_path.isObjectPath();
-        bool find_object = false;
+
 
         StringRef current_type_name;
 
         for (size_t i = 0; i < parts.size(); ++i) {
-            is_object_path = is_object_path | find_object;
             auto part = parts[i];
             current_path = Path(part, current_path);
         }
         return current_path;
     }
 
-    Path createPath(Tree &tree, const std::string &path, const std::string &value_str = "") {
+    Path createPath(Tree &tree, const std::string &path) {
+        auto start_path = (path.front() == '/') ? tree.getRoot() : tree.getCurrent();
+        return createPath(start_path, path);
+    }
+
+    Path createPath(Tree &tree, const std::string &path, const std::string &value_str ) {
         auto start_path = (path.front() == '/') ? tree.getRoot() : tree.getCurrent();
         auto this_path = createPath(start_path, path);
         bool is_object_path = this_path.isObjectPath();

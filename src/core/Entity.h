@@ -34,6 +34,8 @@ public:
         child->setParent(shared_from_this());
     }
 
+    EntityPtr getOrCreateChild(const std::string& name) ;
+
     EntityPtr getChild(const std::string& name) const {
         auto it = children_.find(name);
         if (it != children_.end()) {
@@ -45,7 +47,7 @@ public:
     void setParent(EntityPtr parent) { parent_ = parent; }
     EntityPtr getParent() const { return parent_.lock(); }
 
-    std::string getPath() const {
+    std::string getEntityPath() const {
         std::vector<std::string> path_parts;
         for (auto* current = this; current != nullptr; current = current->getParent().get()) {
             path_parts.push_back(current->getName());
@@ -130,11 +132,23 @@ public:
     // TODO : deserialize in this step, and remove objectsInSerialize_ member
     //      the serialiable can be access from TypeManager
     void setSerialize(StringRef type_name, const std::string& value_str) {
-        objectsInSerialize_[type_name] = rfl::json::read<rfl::Generic>(value_str).value();
+        auto it = objectsInSerialize_.find(type_name);
+        if (it != objectsInSerialize_.end()) {
+            std::cout << "Warning: overriding json str at setSerialize";
+            objectsInSerialize_[type_name] = rfl::json::read<rfl::Generic>(value_str).value();
+        } else {
+            objectsInSerialize_.emplace(type_name, rfl::json::read<rfl::Generic>(value_str).value());
+        }
     }
 
     void setSerialize(StringRef type_name, ValueType value) {
-        objectsInSerialize_[type_name] = std::get<rfl::Generic>(value);
+        auto it = objectsInSerialize_.find(type_name);
+        if (it != objectsInSerialize_.end()) {
+            std::cout << "Warning: overriding json str at setSerialize";
+            objectsInSerialize_[type_name] = std::get<rfl::Generic>(value);
+        } else {
+            objectsInSerialize_.emplace(type_name, std::get<rfl::Generic>(value));
+        }
     }
 
     void deserialize(StringRef type_name) ;
@@ -174,7 +188,6 @@ private:
     std::unordered_map<StringRef, ElementProperties> properties_;
     std::unordered_map<StringRef, rfl::Generic> objectsInSerialize_;
     std::weak_ptr<Entity> parent_;
-    StringRef type_name_;
 friend class EntityRef;
 };
 

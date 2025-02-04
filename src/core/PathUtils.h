@@ -30,6 +30,23 @@ public:
         return oss.str();
     }
 
+    static std::string join(const std::string& parentpath, const std::string& subpath) {
+        if (parentpath.empty()) {
+            return "/" + subpath;
+        } else if (parentpath.back() == '/') {
+            return parentpath + subpath;
+        } else {
+            return parentpath + "/" + subpath;
+        }
+    }
+
+    static std::string getEntityPath(const std::string& full_path) {
+        if (full_path.empty()) return "/";
+        size_t pos = full_path.find_first_of(':');
+        if (pos == std::string::npos || pos == 0) return full_path;
+        return full_path.substr(0, pos);
+    }
+
     static std::string getParent(const std::string& path) {
         if (path.empty()) return "/";
         size_t pos = path.find_last_of('/');

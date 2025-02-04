@@ -54,7 +54,8 @@ set(core_files
   src/core/Tree.h
   src/core/Entity.h
   src/core/Entity.cpp
-  src/core/ObjPath.h
+  src/core/Path.h
+  src/core/PathUtils.h
   src/core/Storage.h
   src/core/Registry.h
   src/core/Object.h

@@ -1,11 +1,21 @@
 #include "Entity.h"
+#include "EntityPool.h"
 //#include "Registry.h"
 #include "TypeManager.h"
 #include "Visitor.h"
 #include <optional>
 
 
-
+EntityPtr Entity::getOrCreateChild(const std::string& name) {
+    auto it = children_.find(name);
+    if (it != children_.end()) {
+        return it->second;
+    }
+    auto fullpath = PathUtils::join(getEntityPath(), name);
+    auto child_entity = EntityPool::getInstance()->makeEntity(name, fnv1a(fullpath.c_str(), fullpath.length()));
+    addChild(child_entity);
+    return child_entity;
+}
 
 void Entity::accept(Visitor<void>& visitor, int level) const {
     //visitor.visit(std::static_pointer_cast<Entity>(shared_from_this()), level);
@@ -36,8 +46,8 @@ std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name, std::shared
 }
 
 void Entity::deserialize(StringRef type_name) {
-    auto generic = objectsInSerialize_[type_name];
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), std::make_optional(generic));
+    auto& generic = objectsInSerialize_[type_name];
+    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), std::make_optional(std::cref(generic)));
 }
 
 //template <typename T>

@@ -19,7 +19,7 @@ public:
                 auto instance = typeManager_.createStorageObject(type_name, entity, std::make_optional(std::cref(serialize)));
                 entity.setObject(type_name, instance);
             } else {
-                throw std::runtime_error("object is aready created, should not be restore from json");
+                //throw std::runtime_error("object is aready created, should not be restore from json");
             }
         }
         for (const auto& [type_name, properties] : entity.getProperties()) {

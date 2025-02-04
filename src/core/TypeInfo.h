@@ -44,7 +44,7 @@ struct ExtractGenericType {
 // 特化版本：当 T 有 GenericType 成员类型时
 template<typename T>
 struct ExtractGenericType<T, std::enable_if_t<has_generic_v<T>>> {
-    using type = typename T::GenericType;
+    using type = typename T::GenericType::element_type;
 };
 
 // 提取类型别名的便捷定义

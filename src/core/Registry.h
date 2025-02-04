@@ -62,9 +62,15 @@ public:
                     }
                 };
             TypeManager::instance().registerStorageObjectCreator(type_name, rfl_generic_creator);
+
+            StorageObjectCreator_t<std::nullopt_t> default_creator = [this](Path entity, std::nullopt_t ) -> std::shared_ptr<void> {
+                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity));
+                };
+            TypeManager::instance().registerStorageObjectCreator(type_name, default_creator);
+
             // Generic object created by copy constructor
-            StorageObjectCreator copy_creator = [this](Path entity, std::any&& arg) -> std::shared_ptr<void> {
-                    auto other = std::any_cast<O>(arg);
+            StorageObjectCreator_t<O> copy_creator = [this](Path entity, O&& other) -> std::shared_ptr<void> {
+                    //auto other = std::any_cast<O>(arg);
                     return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, other));
                 };
             TypeManager::instance().registerStorageObjectCreator(type_name, copy_creator);

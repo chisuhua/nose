@@ -61,7 +61,7 @@ public:
     }
 
     template <typename ArgType>
-    std::shared_ptr<void> createStorageObject(Path entity, ArgType&& args) {
+    std::shared_ptr<void> createStorageObject(const Path& entity, ArgType&& args) {
         auto it = storage_object_creators_.find(typeid(ArgType));
         if (it == storage_object_creators_.end()) {
             throw std::runtime_error("creator not registered for this argument types\n");
@@ -71,7 +71,7 @@ public:
 
     template <typename ArgType>
     void registerStorageObjectCreator(std::function<std::shared_ptr<void>(Path, ArgType arg)> creator) {
-        storage_object_creators_[typeid(ArgType)] = [creator](Path entity, std::any arg) -> std::shared_ptr<void> {
+        storage_object_creators_[typeid(ArgType)] = [creator](const Path& entity, std::any arg) -> std::shared_ptr<void> {
             return creator(entity, std::any_cast<ArgType>(arg));
         };
     }
@@ -148,7 +148,8 @@ private:
                             } else if constexpr (std::is_same_v<rfl::Generic,std::decay_t<decltype(arg)>>) {
                                 std::cout << "SetNonProperty json Value: " << rfl::json::write(arg) << "\n";
                                 if constexpr(has_generic_v<member_type>) {
-                                    using GenericType = typename member_type::GenericType;
+                                    //using GenericType = typename member_type::GenericType;
+                                    using GenericType = ExtractedGenericType<member_type>;
                                     return std::make_shared(rfl::from_generic<GenericType>(arg).value());
                                 } else {
                                     return rfl::from_generic<member_type>(arg).value();
@@ -175,13 +176,13 @@ private:
     template <typename T>
     static std::shared_ptr<void> CreateObject(std::optional<GenericRef> rfl_generic) {
         if constexpr(has_generic_v<T>) {
-            using GenericType = typename T::GenericType;
+            using GenericType = ExtractedGenericType<T>;
             if (rfl_generic) {
                 GenericType obj = rfl::from_generic<GenericType>(rfl_generic.value()).value();
-                return std::static_pointer_cast<void>(std::make_shared<T>(obj));
+                return std::static_pointer_cast<void>(std::make_shared<T>(std::make_shared<GenericType>(std::move(obj))));
             } else {
                 GenericType obj;
-                return std::static_pointer_cast<void>(std::make_shared<T>(obj));
+                return std::static_pointer_cast<void>(std::make_shared<T>(std::make_shared<GenericType>(std::move(obj))));
             }
         } else {
             T obj = rfl::from_generic<T>(rfl_generic.value()).value();
@@ -214,7 +215,7 @@ public:
         if (it == metadata.end()) {
             metadata[type_name] = PropertyMeta::createMetadata<T>();
             if constexpr(has_generic_v<T>) {
-                using GenericType = typename T::GenericType;
+                using GenericType = typename T::GenericType::element_type;
                 StringRef generic_type_name = getTypeName<GenericType>();
                 metadata[generic_type_name] = PropertyMeta::createMetadata<GenericType>();
             }
@@ -266,12 +267,12 @@ public:
     //}
 
     template <typename ArgType>
-    std::shared_ptr<void> createStorageObject(StringRef type_name, Path entity, ArgType&& args) {
+    std::shared_ptr<void> createStorageObject(StringRef type_name, const Path& entity, ArgType&& args) {
         return metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
     }
 
     template <typename T, typename ArgType>
-    std::shared_ptr<T> createStorageObject(Path entity, ArgType&& args) {
+    std::shared_ptr<T> createStorageObject(const Path& entity, ArgType&& args) {
         StringRef type_name = getTypeName<T>();
         auto obj = metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
         return std::static_pointer_cast<T>(obj);
