@@ -29,10 +29,10 @@ public:
 
     PortRole getRole() const ;
 
-    void addData(rfl::Generic data) ;
+    void addData(RflGeneric data) ;
     bool hasData() const ;
 
-    GenericRef receiveData() ;
+    RflGeneric receiveData() ;
 
     ObjPtr<Port> peer() ;
 
@@ -63,8 +63,8 @@ public:
     // 观察者列表
     std::vector<std::function<void()>> observers_;
 
-    Port() = default;
-    Port& operator=(const Port&) = delete;
+    //Port() = default;
+    //Port& operator=(const Port&) = delete;
 };
 
 struct PortGeneric {
@@ -73,8 +73,8 @@ struct PortGeneric {
     ObjPtr<Port> peer_;
     //std::shared_ptr<ObjectRef> peer_;
     PortRole role_;
-    //std::deque<std::any> dataQueue_;
-    std::deque<rfl::Generic> dataQueue_;
+    //std::deque<rfl::Generic> dataQueue_;
+    std::deque<RflGeneric> dataQueue_;
 };
 
 

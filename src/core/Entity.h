@@ -93,7 +93,7 @@ public:
     }
 
     template <typename T>
-    std::shared_ptr<T> getOrCreateObject(std::optional<GenericRef> rfl_generic) {
+    std::shared_ptr<T> getOrCreateObject(GenericRef rfl_generic) {
         auto obj = getObject<T>();
         if (obj) return obj;
         auto type_name = TypeInfo::getTypeName<T>();
@@ -101,6 +101,14 @@ public:
         return std::static_pointer_cast<T>(getOrCreateObject(type_name, rfl_generic));
     }
 
+    template <typename T>
+    std::shared_ptr<T> getOrCreateObject() {
+        auto obj = getObject<T>();
+        if (obj) return obj;
+        auto type_name = TypeInfo::getTypeName<T>();
+
+        return std::static_pointer_cast<T>(getOrCreateObject(type_name));
+    }
 
     // TODO: object check is storaged
     void setObject(StringRef type_name, std::shared_ptr<void> object) {
@@ -111,7 +119,8 @@ public:
         return (it != objects_.end()) ? it->second : nullptr;
     }
 
-    std::shared_ptr<void> getOrCreateObject(StringRef type_name, std::optional<GenericRef> rfl_generic);
+    std::shared_ptr<void> getOrCreateObject(StringRef type_name);
+    std::shared_ptr<void> getOrCreateObject(StringRef type_name, GenericRef rfl_generic);
     std::shared_ptr<void> getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic);
 
     const auto& getChildren() const { return children_; }

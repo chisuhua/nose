@@ -65,5 +65,6 @@ REFL_AUTO(
     field(generic_)
 )
 
+REGISTER_OBJECT(Component)
 #endif // COMPONENT_H
 

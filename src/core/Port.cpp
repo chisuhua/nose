@@ -20,7 +20,8 @@ PortRole Port::getRole() const {
     return generic_->role_;
 }
 
-void Port::addData(rfl::Generic data) {
+//void Port::addData(rfl::Generic data) {
+void Port::addData(RflGeneric data) {
     generic_->dataQueue_.push_back(data);
 }
 
@@ -35,9 +36,9 @@ ObjPtr<Port> Port::peer() {
     //return std::dynamic_pointer_cast<Port>(this->generic_->peer_);
 }
 
-GenericRef Port::receiveData() {
+RflGeneric Port::receiveData() {
     if (!generic_->dataQueue_.empty()) {
-        GenericRef data = generic_->dataQueue_.front();
+        RflGeneric data = generic_->dataQueue_.front();
         generic_->dataQueue_.pop_front();
         return data;
     }

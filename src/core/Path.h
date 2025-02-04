@@ -226,11 +226,22 @@ public:
         if constexpr(has_generic_v<T>) {
             using GenericType = ExtractedGenericType<T>;
             //using GenericObj = typename std::pointer_traits<GenericType>::element_type;
-            auto generate_ptr = entity_ptr_->getOrCreateObject<GenericType>(std::cref(rfl_generic));
-            auto ptr = entity_ptr_->getOrCreateObject<T>(generate_ptr);
+           
+            std::shared_ptr<GenericType> generic_ptr;
+            if (rfl_generic) {
+                generic_ptr = entity_ptr_->getOrCreateObject<GenericType>(std::cref(rfl_generic.value()));
+            } else {
+                generic_ptr = entity_ptr_->getOrCreateObject<GenericType>();
+            }
+            auto ptr = entity_ptr_->getOrCreateObject<T>(generic_ptr);
             return ObjPtr<T>::make(std::move(ptr));
         } else {
-            auto ptr = entity_ptr_->getOrCreateObject<T>(rfl_generic);
+            std::shared_ptr<T> ptr;
+            if (rfl_generic) {
+                ptr = entity_ptr_->getOrCreateObject<T>(rfl_generic.value());
+            } else {
+                ptr = entity_ptr_->getOrCreateObject<T>();
+            }
             return ObjPtr<T>::make(std::move(ptr));
         }
     }

@@ -87,7 +87,7 @@ class ObjPtr<T, std::enable_if_t<!has_generic_v<T>>> {
     return ObjPtr<T>(_ptr);
   }
 
-  ObjPtr() : ptr_(std::make_shared<T>()) {}
+  ObjPtr() : ptr_(nullptr) {}
 
   ObjPtr(const ObjPtr<T>& _other) = default;
 
@@ -212,7 +212,7 @@ class ObjPtr<T, std::enable_if_t<has_generic_v<T>>> {
     return ObjPtr<T>(_ptr);
   }
 
-  ObjPtr() : ptr_(std::make_shared<T>()) {}
+  ObjPtr() : ptr_(nullptr) {}
 
   ObjPtr(const ObjPtr<T>& _other) = default;
 
@@ -267,6 +267,10 @@ class ObjPtr<T, std::enable_if_t<has_generic_v<T>>> {
 
   /// Copy assignment operator
   ObjPtr<T>& operator=(const ObjPtr<T>& _other) = default;
+  //ObjPtr<T>& operator=(const ObjPtr<T>& _other) {
+      //ptr_ = _other.ptr_;
+      //return *this;
+  //}
 
  private:
   /// Only make is allowed to use this constructor.

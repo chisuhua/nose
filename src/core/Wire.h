@@ -46,10 +46,12 @@ public:
 
     void setMasterPort(ObjPtr<Port> master) {
         generic_->master_ = master;
+        generic_->master_->setRole(PortRole::Master);
     }
 
     void setSlavePort(ObjPtr<Port> slave) {
-        generic_->master_ = slave;
+        generic_->slave_ = slave;
+        generic_->slave_->setRole(PortRole::Slave);
     }
 
     ObjPtr<Port> getMasterPort() {

@@ -3,6 +3,7 @@
 
 #include <map>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -46,20 +47,22 @@ public:
         if constexpr(has_generic_v<O>) {
             using GenericType = typename O::GenericType::element_type;
             Registry::getInstance()->registerObject<GenericType, E>();
+            using VoidPtrType = std::shared_ptr<void>;
             // Object with has_generic_v is only created from generic object
-            StorageObjectCreator creator =  [this](Path entity, std::any arg) -> std::shared_ptr<void> {
-                    auto generic = std::any_cast<std::shared_ptr<GenericType>>(arg);
-                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, generic));
+            //StorageObjectCreator creator =  [this](Path entity, std::any arg) -> std::shared_ptr<void> {
+                    //auto generic = std::any_cast<std::shared_ptr<GenericType>>(arg);
+                    //return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, generic));
+                //};
+            StorageObjectCreator_t<VoidPtrType> generic_creator = [this](Path entity, VoidPtrType generic) -> std::shared_ptr<void> {
+                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, std::static_pointer_cast<GenericType>(generic)));
                 };
-            TypeManager::instance().registerStorageObjectCreator(type_name, creator);
+            TypeManager::instance().registerStorageObjectCreator(type_name, generic_creator);
+
         } else {
             // Generic object create from rfl_generic
-            StorageObjectCreator_t<std::optional<GenericRef>> rfl_generic_creator = [this](Path entity, std::optional<GenericRef> rfl_generic) -> std::shared_ptr<void> {
-                    if (rfl_generic) {
-                        O& obj_from_rfl = rfl::from_generic<O>(rfl_generic.value()).value();
-                        return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, obj_from_rfl));
-                    } else {
-                    }
+            StorageObjectCreator_t<GenericRef> rfl_generic_creator = [this](Path entity, GenericRef rfl_generic) -> std::shared_ptr<void> {
+                    auto& obj_from_rfl = rfl::from_generic<O>(rfl_generic).value();
+                    return std::static_pointer_cast<void>(getOrCreateObject<O, E>(entity, obj_from_rfl));
                 };
             TypeManager::instance().registerStorageObjectCreator(type_name, rfl_generic_creator);
 

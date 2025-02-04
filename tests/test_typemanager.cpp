@@ -5,26 +5,26 @@
 #include "Property.h"
 #include "Port.h"
 #include "TypeManager.h"
+#include "Registry.h"
 
-namespace test_typemanager {
 // Simple enum and its parsing function
 enum class Orientation {
     Horizontal,
     Vertical,
 };
 
-Orientation parse_orientation(std::string_view str) {
+Orientation parse_orientation2(std::string_view str) {
     if (str == "horizontal") return Orientation::Horizontal;
     if (str == "vertical") return Orientation::Vertical;
     throw std::runtime_error("Cannot parse " + std::string(str) + " as Orientation");
 }
 
 // Custom parsing function
-std::string parse_custom(const std::string& value_str) {
+std::string parse_custom2(const std::string& value_str) {
     return "Custom Parsed: " + value_str;
 }
 
-class CustomObjectGeneric {
+class Custom2ObjectGeneric {
 public:
     int intval;
     float floatval;
@@ -32,11 +32,11 @@ public:
     Orientation orientation;
 };
 
-class CustomObject {
+class Custom2Object {
 public:
-    using GenericType = std::shared_ptr<CustomObjectGeneric>;
+    using GenericType = std::shared_ptr<Custom2ObjectGeneric>;
     GenericType generic_;
-    CustomObject(GenericType generic) : generic_(generic) {
+    Custom2Object(GenericType generic) : generic_(generic) {
         intval = generic->intval;
         floatval = generic->floatval;
         strval = generic->strval;
@@ -48,19 +48,17 @@ public:
     std::string strval;
     Orientation orientation;
 };
-}
 
 // Reflexion macro
 REFL_AUTO(
-    type(test_typemanager::CustomObject),
+    type(Custom2Object),
     field(intval, Property()),
     field(floatval, Property()),
-    field(strval, Property(&test_typemanager::parse_custom)),
-    field(orientation, Property(PropertyType::Required, &test_typemanager::parse_orientation))
+    field(strval, Property(&parse_custom2)),
+    field(orientation, Property(PropertyType::Required, &parse_orientation2))
 )
 
-//REGISTER_OBJECT(CustomObject)
-using namespace test_typemanager;
+REGISTER_OBJECT(Custom2Object)
 
 PortRole parse_role(std::string_view str) {
     if (str == "Master") return PortRole::Master;
@@ -71,10 +69,13 @@ PortRole parse_role(std::string_view str) {
 TEST_CASE("Test registerStorageObjectCreator and createStorageObject") {
     TypeManager& typeManager = TypeManager::instance();
 
-    // 注册 CustomObjectGeneric 的存储对象创建器
-    StorageObjectCreator createStorageObjectGeneric = [](Path entity, std::any args) -> std::shared_ptr<void> {
-        auto [intval, floatval, strval] = std::any_cast<std::tuple<int, float, std::string>>(args);
-        auto generic_obj = std::make_shared<CustomObjectGeneric>();
+    using Custom2ObjectGenericType = std::tuple<int, float, const char*>;
+
+    // 注册 Custom2ObjectGeneric 的存储对象创建器
+    StorageObjectCreator_t<Custom2ObjectGenericType> createStorageObjectGeneric = [](Path entity, Custom2ObjectGenericType args) -> std::shared_ptr<void> {
+        //auto [intval, floatval, strval] = std::any_cast<std::tuple<int, float, std::string>>(args);
+        auto [intval, floatval, strval] = args;
+        auto generic_obj = std::make_shared<Custom2ObjectGeneric>();
         generic_obj->intval = intval;
         generic_obj->floatval = floatval;
         generic_obj->strval = strval;
@@ -82,30 +83,32 @@ TEST_CASE("Test registerStorageObjectCreator and createStorageObject") {
         return std::static_pointer_cast<void>(generic_obj);
     };
 
-    typeManager.registerStorageObjectCreator("CustomObjectGeneric", createStorageObjectGeneric);
+    typeManager.registerStorageObjectCreator("Custom2ObjectGeneric", createStorageObjectGeneric);
 
-    // 注册 CustomObject 的存储对象创建器
-    StorageObjectCreator createStorageObject = [](Path entity, std::any args) -> std::shared_ptr<void> {
-        auto generic = std::any_cast<std::shared_ptr<CustomObjectGeneric>>(args);
-        auto custom_obj = std::make_shared<CustomObject>(generic);
+    using Custom2ObjectGenericPtrType = std::shared_ptr<Custom2ObjectGeneric>;
+
+    // 注册 Custom2Object 的存储对象创建器
+    StorageObjectCreator_t<Custom2ObjectGenericPtrType> createStorageObject = [](Path entity, Custom2ObjectGenericPtrType args) -> std::shared_ptr<void> {
+        //auto generic = std::any_cast<std::shared_ptr<Custom2ObjectGeneric>>(args);
+        auto custom_obj = std::make_shared<Custom2Object>(args);
         return std::static_pointer_cast<void>(custom_obj);
     };
 
-    typeManager.registerStorageObjectCreator("CustomObject", createStorageObject);
+    typeManager.registerStorageObjectCreator("Custom2Object", createStorageObject);
 
-    // 测试创建 CustomObjectGeneric 存储对象
+    // 测试创建 Custom2ObjectGeneric 存储对象
     Path entity_generic = Path::make("/test_entity_generic");
-    auto generic_obj = typeManager.createStorageObject("CustomObjectGeneric", entity_generic, std::make_tuple(10, 3.14f, "hello"));
-    auto generic_obj_ptr = std::static_pointer_cast<CustomObjectGeneric>(generic_obj);
+    auto generic_obj = typeManager.createStorageObject("Custom2ObjectGeneric", entity_generic, std::make_tuple(10, 3.14f, "hello"));
+    auto generic_obj_ptr = std::static_pointer_cast<Custom2ObjectGeneric>(generic_obj);
     CHECK(generic_obj_ptr->intval == 10);
     CHECK(generic_obj_ptr->floatval == 3.14f);
     CHECK(generic_obj_ptr->strval == "hello");
     CHECK(generic_obj_ptr->orientation == Orientation::Horizontal);
 
-    // 测试创建 CustomObject 存储对象
+    // 测试创建 Custom2Object 存储对象
     Path entity = Path::make("/test_entity");
-    auto custom_obj = typeManager.createStorageObject("CustomObject", entity, generic_obj_ptr);
-    auto custom_obj_ptr = std::static_pointer_cast<CustomObject>(custom_obj);
+    auto custom_obj = typeManager.createStorageObject("Custom2Object", entity, generic_obj_ptr);
+    auto custom_obj_ptr = std::static_pointer_cast<Custom2Object>(custom_obj);
     CHECK(custom_obj_ptr->intval == 10);
     CHECK(custom_obj_ptr->floatval == 3.14f);
     CHECK(custom_obj_ptr->strval == "hello");

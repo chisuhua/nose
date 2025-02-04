@@ -18,6 +18,7 @@ using ValueType = std::variant<nullptr_t, int, float, std::string, bool, double,
 using ElementProperties = std::unordered_map<std::string, ValueType>;
 using GenericRef = std::reference_wrapper<const rfl::Generic>;
 using GenericPtr = std::shared_ptr<rfl::Generic>;
+using RflGeneric = rfl::Generic;
 
 template <typename T, typename = void>
 struct is_reflectable : std::false_type {};
