@@ -39,7 +39,7 @@ public:
         Visitor<void>::visit(entity, level);
     }
 
-    void visitObject(const std::shared_ptr<void>&, StringRef) override {}
+    void visitObject(const std::shared_ptr<void>&, StringRef, Path) override {}
 private:
     TypeManager& typeManager_;
     //std::shared_ptr<Registry> registry_;

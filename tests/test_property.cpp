@@ -105,7 +105,7 @@ REFL_AUTO(
 
 class SummationVisitor : public Visitor<void> {
 public:
-    virtual void visitObject(const std::shared_ptr<void>& obj, StringRef) override {
+    virtual void visitObject(const std::shared_ptr<void>& obj, StringRef, Path) override {
         auto custom_object = std::static_pointer_cast<CustomObject>(obj);
         if (custom_object) {
             // 实现求和逻辑

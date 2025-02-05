@@ -4,9 +4,10 @@
 #include <memory>
 #include <refl.hpp>
 #include "Object.h"
+#include "ObjPtr.h"
 #include "Path.h"
 #include "Property.h"
-#include "Object.h"
+#include "ObjPtr.h"
 #include "Registry.h"
 
 enum class PortRole { Master, Slave };
@@ -82,64 +83,8 @@ struct PortGeneric {
  REFL_AUTO(
     type(Port),
     field(generic_)
-    )
-REGISTER_OBJECT(Port)
+    );
+REGISTER_OBJECT(Port);
+//static ObjectRegistrar<Port> auto_Port_("Port");
 
 #endif // PORT_H
-
-
-
-    // 添加 << 操作符用于send data to port
-    //Port<Bundle>& operator<<(const Bundle& data) {
-        //assert(peer_);
-        //using namespace refl;
-        //const auto type_info = reflect<Bundle>();
-        //for_each(type_info.members, [this, &data](auto member) {
-            //if (peer) {
-                //auto& peer_data = peer->data_;
-                //const auto& field_prop = refl::descriptor::get_attribute<IoProperty>(member);
-
-                //// 如果自己是 Master，写入对方是 Slave 的成员
-                //if (role == Role::Master && field_prop.role == Role::Slave) {
-                    //member(peer_data) = member(data);
-                    //// always 写入自己的成员
-                    //member(this->data_) = member(data);
-                //}
-
-                //// 如果自己是 Slave，写入对方是 Master 的成员
-                //if (role == Role::Slave && field_prop.role == Role::Master) {
-                    //member(peer_data) = member(data);
-                    //// alway 写入自己的成员
-                    //member(this->data_) = member(data);
-                //}
-            //}
-            //// 无论何种角色，总是写入自己的成员
-            ////member(this->io_.io_) = member(data);
-        //});
-        //return *this;
-    //}
-
-    // 添加 >> 操作符用于从port读取数据
-    //Port<Bundle>& operator>>(Bundle& data)
-        //assert(peer);
-        //using namespace refl;
-        //const auto type_info = reflect<typename Bundle>();
-        //for_each(type_info.members, [this, &data](auto member) {
-            //auto& peer_data = peer->data_;
-            //const auto& field_prop = refl::descriptor::get_attribute<IoProperty>(member);
-
-            //// 如果自己是 Master，从自身的 Slave 成员读取数据
-            //if (role == Role::Master && field_prop.role == Role::Slave) {
-                //member(data) = member(this->data_);
-            //}
-
-            //// 如果自己是 Slave，从对方的 Master 成员读取数据
-            //if (role == Role::Slave && field_prop.role == Role::Master) {
-                //member(data) = member(peer_data);
-            //}
-        //});
-        //return *this;
-    //}
-
-
-

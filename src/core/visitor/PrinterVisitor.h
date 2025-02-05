@@ -15,7 +15,7 @@ public:
         Visitor<void>::visit(entity, level);
     }
 
-    void visitObject(const std::shared_ptr<void>&, StringRef) override {}
+    void visitObject(const std::shared_ptr<void>&, StringRef, Path) override {}
 
 private:
     void printEntity(Path entity, int level) {

@@ -49,7 +49,9 @@ struct ObjPtrParser {
             //return ObjPtrClass(std::move(*_ptrs.value_)...);
           //};
           //return rfl:apply(class_from_ptrs, ptr_field_tuple);
-          return ObjPtrClass::make(_h);
+          //return ObjPtrClass::make(_h);
+          using ObjClass = typename ObjPtrClass::element_type;
+          return Result<ObjPtrClass>(make_object<ObjClass>(_h));
       } catch (std::exception& e) {
         return Error(e.what());
       }

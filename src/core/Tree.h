@@ -40,7 +40,8 @@ public:
         return current_entity;
     }
 
-    void accept(Visitor<void>& visitor, const std::string& path = "") {
+    template<typename T = void>
+    void accept(Visitor<T>& visitor, const std::string& path = "") {
         Path start_entity = (path.empty() || path.front() == '/') ? root_ : current_;
         auto target_entity = traverseToEntity(start_entity, path);
         if (!target_entity) {

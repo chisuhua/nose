@@ -41,12 +41,12 @@ public:
     }
 
     template<typename O, typename E>
-    void registerObject() {
-        StringRef type_name = TypeManager::instance().registerType<O>();
+    void registerObject(const std::string& type_tag) {
+        StringRef type_name = TypeManager::instance().registerType<O>(type_tag);
 
         if constexpr(has_generic_v<O>) {
             using GenericType = typename O::GenericType::element_type;
-            Registry::getInstance()->registerObject<GenericType, E>();
+            Registry::getInstance()->registerObject<GenericType, E>(type_tag + "_GenericType");
             using VoidPtrType = std::shared_ptr<void>;
             // Object with has_generic_v is only created from generic object
             //StorageObjectCreator creator =  [this](Path entity, std::any arg) -> std::shared_ptr<void> {
@@ -135,10 +135,17 @@ public:
 // 用于全局注册的工具模板类
 template <typename O, typename E = Entity>
 struct ObjectRegistrar {
-    ObjectRegistrar() {
-        Registry::getInstance()->registerObject<O, E>();
+    ObjectRegistrar(const std::string& name) {
+        Registry::getInstance()->registerObject<O, E>(name);
     }
 };
+
+#define REGISTER_OBJECT_1(name) static ObjectRegistrar<name> auto_##name(#name);
+#define REGISTER_OBJECT_2(name, str) static ObjectRegistrar<name> auto_##name(str);
+
+// 主宏，根据参数数量选择合适的宏
+#define GET_MACRO(_1,_2,NAME,...) NAME
+#define REGISTER_OBJECT(...) GET_MACRO(__VA_ARGS__, REGISTER_OBJECT_2, REGISTER_OBJECT_1)(__VA_ARGS__)
 
 #define REGISTER_NODE_OBJECT(O, ...) \
     do { \
@@ -146,14 +153,16 @@ struct ObjectRegistrar {
         static ObjectRegistrar<O, Entity> auto_##O##_registrar(); \
     } while(0)
 
-#define STRINGIFY_HELPER(...) #__VA_ARGS__
-#define STRINGIFY(x) STRINGIFY_HELPER x
+//#define STRINGIFY_HELPER(...) #__VA_ARGS__
+//#define STRINGIFY(x) STRINGIFY_HELPER x
 
-// 辅助宏，用于选择第一个参数
-#define FIRST_ARG_IMPL(_1, ...) auto_##_1
+//// 辅助宏，用于选择第一个参数
+//#define FIRST_ARG_IMPL(_1, ...) auto_##_1
 
 //#define REGISTER_OBJECT(O, ...) static ObjectRegistrar<O, EntityNull, __VA_ARGS__> auto_##O##_registrar;
-#define REGISTER_OBJECT(...) static ObjectRegistrar<__VA_ARGS__> FIRST_ARG_IMPL(__VA_ARGS__);
+//#define REGISTER_OBJECT(O, ...) static ObjectRegistrar<O> FIRST_ARG_IMPL(O)(__VA_ARGS__);
+//#define REGISTER_OBJECT(O, ...) static ObjectRegistrar<O> auto_##O##_ (__VA_ARGS__);
+//#define REGISTER_OBJECT(O, T) static ObjectRegistrar<O> auto_##O##_ (##T);
 
 //#define REGISTER_OBJECT(...) static ObjectRegistrar<__VA_ARGS__> STRINGIFY((__VA_ARGS_))##_registrar;
 #endif

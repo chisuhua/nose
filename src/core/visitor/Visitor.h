@@ -4,9 +4,10 @@
 #include <memory>
 #include <string>
 #include "Path.h"
+#include "TypeManager.h"
 #include "StringIntern.h"
 
-template<typename T>
+template<typename T = void>
 class Visitor {
 public:
     virtual ~Visitor() = default;
@@ -16,7 +17,11 @@ public:
             child->accept(*this, level + 1);
         }
         for (const auto& [key, object] : entity.getObjects()) {
-            visitObject(object, key);
+            auto obj_typetag = TypeManager::instance().getTypeTag(key);
+            if (TypeInfo::getTypeName<T>() == obj_typetag) {
+                auto type_obj = std::static_pointer_cast<T>(object);
+                visitObject(type_obj, key, entity);
+            }
         }
     };
 
@@ -30,7 +35,7 @@ public:
         //}
     //}
 
-    virtual void visitObject(const std::shared_ptr<void>&, StringRef) = 0;
+    virtual void visitObject(const std::shared_ptr<T>&, StringRef, Path) = 0;
 };
 
 #endif // VISITOR_H

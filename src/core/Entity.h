@@ -110,9 +110,20 @@ public:
         return std::static_pointer_cast<T>(getOrCreateObject(type_name));
     }
 
+    //template <typename T>
+    //void removeObject() {
+        //auto type_name = TypeInfo::getTypeName<T>();
+        //auto obj = objects_[type_name];
+        //Registry::getInstance()->removeObject<T, Entity>(this);
+    //}
+
+    //void removeObject(StringRef type_name, std::shared_ptr<void> object) {
+        //objects_[type_name] = object;
+    //}
+
     // TODO: object check is storaged
     void setObject(StringRef type_name, std::shared_ptr<void> object) {
-        objects_[type_name] = object; 
+        objects_[type_name] = object;
     }
     std::shared_ptr<void> getObject(StringRef type_name) const {
         auto it = objects_.find(type_name);
@@ -170,7 +181,10 @@ public:
         return objectsInSerialize_;
     }
 
-    void accept(Visitor<void>& visitor, int level = 0) const ;
+    template<typename T = void>
+    void accept(Visitor<T>& visitor, int level = 0) const {
+        visitor.visit(shared_from_this(), level);
+    }
 
     EntityPtr findEntity(const std::string& path) const {
         auto parts = PathUtils::split(path);

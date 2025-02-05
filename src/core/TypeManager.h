@@ -210,9 +210,18 @@ public:
         return ti.Name();
     }
 
+    StringRef getTypeTag(StringRef type_name) {
+        auto it = type_tag_.find(type_name);
+        if (it != type_tag_.end()) {
+            return type_tag_[type_name];
+        }
+        return StringRef();
+    }
+
     template <typename T>
-    StringRef registerType() {
+    StringRef registerType(const std::string& type_tag) {
         StringRef type_name = getTypeName<T>();
+        type_tag_[type_name]= type_tag;
         auto it = metadata.find(type_name);
         if (it == metadata.end()) {
             metadata[type_name] = PropertyMeta::createMetadata<T>();
@@ -287,6 +296,7 @@ public:
 
 private:
     std::unordered_map<StringRef, PropertyMeta> metadata;
+    std::unordered_map<StringRef, StringRef> type_tag_;
 };
 
 #endif // TYPEMANAGER_H

@@ -2,13 +2,13 @@
 #include "Component.h"
 
 TEST_CASE("Component functionality") {
-    Path entity_port1 = Path::make("/port1");
-    Path entity_port2 = Path::make("/port2");
-    Path entity_component = Path::make("/component");
+    Path _component = Path::make("/component");
+    Path _port1 = Path("port1", _component);
+    Path _port2 = Path("port2", _component);
 
-    auto port1 = entity_port1.make_object<Port>();
-    auto port2 = entity_port2.make_object<Port>();
-    auto component = entity_component.make_object<Component>();
+    auto port1 = _port1.make_object<Port>();
+    auto port2 = _port2.make_object<Port>();
+    auto component = _component.make_object<Component>();
 
     component->addPort("port1", port1);
     component->addPort("port2", port2);
@@ -19,8 +19,8 @@ TEST_CASE("Component functionality") {
     //port2->send(std::string("Hello, World!"));
 
     // 通知组件端口变化
-    component->portNotified("port1");
-    component->portNotified("port2");
+    component->updatePort("port1");
+    component->updatePort("port2");
 
     // 模拟时钟更新
     component->tick();

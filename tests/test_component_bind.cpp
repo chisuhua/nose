@@ -2,25 +2,58 @@
 #include "ComponentBindVisitor.h"
 #include "Component.h"
 #include "Port.h"
+#include "Wire.h"
 #include "Tree.h"
+#include "PrinterVisitor.h"
 
 TEST_CASE("ComponentBindVisitor functionality") {
     Tree tree;
-    Path entity = tree.getRoot(); 
+    Path _root = tree.getRoot(); 
+    Path _compA = Path("componentA", _root);
+    Path _portA1 = Path("port1", _compA);
+    Path _portA2 = Path("port2", _compA);
+    Path _port1 = Path("port1", _root);
+    Path _port2 = Path("port2", _root);
 
-    // 创建 Entity 实例并添加到 Tree 中
-    auto component1 = entity.make_object<Component>();
+    Path _wire1 = Path::make("/wire1");
+    Path _wire2 = Path::make("/wire2");
 
-    auto port1 = entity.make_object<Port>();
-    auto port2 = entity.make_object<Port>();
+    auto componentA = _compA.make_object<Component>();
 
-    port1->setRole(PortRole::Master);
-    port2->setRole(PortRole::Slave);
+    auto portA1 = _portA1.make_object<Port>();
+    auto portA2 = _portA2.make_object<Port>();
+    auto port1 = _port1.make_object<Port>();
+    auto port2 = _port2.make_object<Port>();
+    auto wire1 = _wire1.make_object<Wire>();
+    auto wire2 = _wire2.make_object<Wire>();
 
-    component1->addPort("port1", port1);
-    component1->addPort("port2", port2);
-    port1->bind(port2);
+    wire1->setMasterPort(port1);
+    wire1->setSlavePort(portA1);
+    wire1->bind();
 
+    wire2->setMasterPort(port2);
+    wire2->setSlavePort(portA2);
+    wire2->bind();
+
+    CHECK(componentA->isPortUpdated("port1") == false);
+    CHECK(componentA->isPortUpdated("port2") == false);
+
+    // 通知组件端口变化
+    componentA->updatePort("port1");
+    componentA->updatePort("port2");
+
+    // 检查端口是否已更新
+    CHECK(componentA->isPortUpdated("port1") == true);
+    CHECK(componentA->isPortUpdated("port2") == true);
+
+    componentA->clearPortUpdate("port1");
+    componentA->clearPortUpdate("port2");
+
+    CHECK(componentA->isPortUpdated("port1") == false);
+    CHECK(componentA->isPortUpdated("port2") == false);
+
+    PrinterVisitor printerVisitor;
+    tree.accept(printerVisitor);
 
     // 创建 ComponentBindVisitor 实例
     ComponentBindVisitor visitor;
@@ -30,17 +63,13 @@ TEST_CASE("ComponentBindVisitor functionality") {
 
     // 模拟端口变化
     port1->send(42);
-    port2->send(std::string("Hello, World!"));
-
-    // 通知组件端口变化
-    component1->portNotified("port1");
-    component1->portNotified("port2");
+    port2->send(43);
 
     // 模拟时钟更新
-    component1->tick();
+    componentA->tick();
 
     // 检查端口是否已更新
-    CHECK(component1->isPortUpdated("port1") == true);
-    CHECK(component1->isPortUpdated("port2") == true);
+    CHECK(componentA->isPortUpdated("port1") == true);
+    CHECK(componentA->isPortUpdated("port2") == true);
 }
 

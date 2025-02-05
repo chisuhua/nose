@@ -17,10 +17,10 @@ EntityPtr Entity::getOrCreateChild(const std::string& name) {
     return child_entity;
 }
 
-void Entity::accept(Visitor<void>& visitor, int level) const {
-    //visitor.visit(std::static_pointer_cast<Entity>(shared_from_this()), level);
-    visitor.visit(shared_from_this(), level);
-}
+//void Entity::accept(Visitor<void>& visitor, int level) const {
+    ////visitor.visit(std::static_pointer_cast<Entity>(shared_from_this()), level);
+    //visitor.visit(shared_from_this(), level);
+//}
 
 //template <typename T, typename E, typename... Args>
 //std::shared_ptr<T> Entity::getOrCreateObject(Args&&... args) {
@@ -31,6 +31,7 @@ void Entity::accept(Visitor<void>& visitor, int level) const {
     //return obj;
 //}
 //
+
 std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name) {
     auto obj = getObject(type_name);
     if (obj) return obj;

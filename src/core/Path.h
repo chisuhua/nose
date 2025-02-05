@@ -2,7 +2,7 @@
 #define PATH_H
 
 #include "EntityPool.h"
-#include "Object.h"
+#include "ObjPtr.h"
 #include "PathUtils.h"
 #include "StringIntern.h"
 #include <memory>
@@ -295,7 +295,8 @@ public:
         return entity_ptr_->getSerializies();
     }
 
-    void accept(Visitor<void>& visitor, int level = 0) const {
+    template<typename T = void>
+    void accept(Visitor<T>& visitor, int level = 0) const {
         entity_ptr_->accept(visitor, level);
     }
 

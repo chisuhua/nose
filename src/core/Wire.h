@@ -17,6 +17,11 @@ struct WireData {
     uint64_t test_only;
 };
 
+struct WireConnect {
+  std::string master_name;
+  std::string slave_name;
+};
+
 class Wire {
 public:
     using GenericType = std::shared_ptr<WireData>;
@@ -25,11 +30,15 @@ public:
     explicit Wire(GenericType generic) 
         : generic_(generic) {}
 
-    //static std::shared_ptr<Wire> GetInstance(GenericType generic) {
-        //auto entity = Path::getEntityByHash(generic->entity_hash);
-        //return entity.getObject<Wire>();
-    //}
     virtual void bind() {
+        if (!generic_->master_.ptr()) {
+            generic_->master_ = Path::make(connect_.master_name).make_object<Port>();
+            generic_->master_->setRole(PortRole::Master);
+        }
+        if (!generic_->slave_.ptr()) {
+            generic_->slave_ = Path::make(connect_.slave_name).make_object<Port>();
+            generic_->slave_->setRole(PortRole::Slave);
+        }
         auto master_port = generic_->master_;
         auto slave_port = generic_->slave_;
         if (!master_port.ptr() or !slave_port.ptr()) {
@@ -62,9 +71,8 @@ public:
         return generic_->slave_;
     }
 
-
     uint64_t test_only;
-    //std::vector<Port> connect_;
+    WireConnect connect_;
 };
 
 // ValueType ParseConnection(const std::string& valueStr) {
@@ -74,8 +82,8 @@ public:
 
 REFL_AUTO(
     type(Wire),
-    field(test_only)
-    //field(connect_)
+    field(test_only),
+    field(connect_)
 );
 REGISTER_OBJECT(Wire)
 

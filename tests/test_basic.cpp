@@ -10,7 +10,7 @@
 
 TEST_CASE("Basic TypeManager registration") {
     TypeManager& typeManager = TypeManager::instance();
-    typeManager.registerType<Port>();
+    typeManager.registerType<Port>("Port");
     //typeManager.registerType<Wire>();
     //typeManager.registerType<Channel>();
     //typeManager.registerType<Clock>();

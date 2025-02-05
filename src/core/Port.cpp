@@ -23,6 +23,7 @@ PortRole Port::getRole() const {
 //void Port::addData(rfl::Generic data) {
 void Port::addData(RflGeneric data) {
     generic_->dataQueue_.push_back(data);
+    notifyObservers();
 }
 
 bool Port::hasData() const {

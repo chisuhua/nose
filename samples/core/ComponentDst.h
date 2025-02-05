@@ -11,8 +11,8 @@ public:
         : Component(generic) {}
 
 
-    void portNotified(const std::string& portName) override {
-        Component::portNotified(portName);
+    void updatePort(const std::string& portName) override {
+        Component::updatePort(portName);
         std::cout << "ComponentDst: Port " << portName << " was updated." << std::endl;
     }
 

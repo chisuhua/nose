@@ -13,8 +13,6 @@ struct ComponentData {
     // 端口更新标志映射
     std::map<std::string, bool> portsUpdated_;
 
-    ObjPtr<Port> slave_;
-    PortRole role_;
     uint64_t test_only;
 };
 
@@ -28,6 +26,7 @@ public:
 
 
     virtual ~Component() = default;
+    virtual void build() {};
 
     // 添加端口
     void addPort(const std::string& name, ObjPtr<Port> port) {
@@ -44,8 +43,12 @@ public:
     }
 
     // 端口通知
-    virtual void portNotified(const std::string& portName) {
+    virtual void updatePort(const std::string& portName) {
         generic_->portsUpdated_[portName] = true;
+    }
+
+    virtual void clearPortUpdate(const std::string& portName) {
+        generic_->portsUpdated_[portName] = false;
     }
 
     virtual bool isPortUpdated(const std::string& portName) {
