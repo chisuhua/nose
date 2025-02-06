@@ -17,6 +17,13 @@ EntityPtr Entity::getOrCreateChild(const std::string& name) {
     return child_entity;
 }
 
+void Entity::removeObject(StringRef type_name) {
+    auto it = objects_.find(type_name);
+    if (it != objects_.end()) {
+        objects_.erase(it);
+    }
+}
+
 //void Entity::accept(Visitor<void>& visitor, int level) const {
     ////visitor.visit(std::static_pointer_cast<Entity>(shared_from_this()), level);
     //visitor.visit(shared_from_this(), level);
@@ -32,30 +39,30 @@ EntityPtr Entity::getOrCreateChild(const std::string& name) {
 //}
 //
 
-std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name) {
-    auto obj = getObject(type_name);
-    if (obj) return obj;
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), std::nullopt);
-    return objects_[type_name];
+ObjRef Entity::getOrCreateObject(StringRef type_name) {
+    auto&& obj = getObject(type_name);
+    if (obj) return obj.value();
+    objects_.emplace(type_name, TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), std::nullopt));
+    return objects_.at(type_name);
 }
 
-std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name, GenericRef rfl_generic) {
-    auto obj = getObject(type_name);
-    if (obj) return obj;
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), rfl_generic);
-    return objects_[type_name];
+ObjRef Entity::getOrCreateObject(StringRef type_name, GenericRef rfl_generic) {
+    auto&& obj = getObject(type_name);
+    if (obj) return obj.value();
+    objects_.emplace(type_name, TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), rfl_generic));
+    return objects_.at(type_name);
 }
 
-std::shared_ptr<void> Entity::getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic) {
-    auto obj = getObject(type_name);
-    if (obj) return obj;
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), generic);
-    return objects_[type_name];
+ObjRef Entity::getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic) {
+    auto&& obj = getObject(type_name);
+    if (obj) return obj.value();
+    objects_.emplace(type_name, TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), generic));
+    return objects_.at(type_name);
 }
 
 void Entity::deserialize(StringRef type_name) {
     auto& generic = objectsInSerialize_[type_name];
-    objects_[type_name] = TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), std::cref(generic));
+    objects_.emplace(type_name, TypeManager::instance().createStorageObject(type_name, Path(shared_from_this()), std::cref(generic)));
 }
 
 //template <typename T>

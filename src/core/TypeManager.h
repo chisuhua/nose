@@ -12,17 +12,21 @@
 #include <typeindex>
 #include <refl.hpp>
 #include "Path.h"
+#include "Object.h"
 #include "StringIntern.h"
 #include "Property.h"
 #include "TypeInfo.h"
 
 using KeyValueParser = ValueType(*)(const std::string&, const std::string&);
-using PropertiesSetter = void(*)(const std::shared_ptr<void>, ElementProperties&);
+using PropertiesSetter = void(*)(ObjRef, ElementProperties&);
 
-using ObjectCreator = std::function<std::shared_ptr<void>(GenericRef)>;
+using ObjectCreator = std::function<ObjRef(GenericRef)>;
+
+// this for real function type
 template <typename T>
-using StorageObjectCreator_t = std::function<std::shared_ptr<void>(Path, T)>;
-using StorageObjectCreator = std::function<std::shared_ptr<void>(Path, std::any)>;
+using StorageObjectCreator_t = std::function<ObjRef(Path, T)>;
+// this for unordered_map value type, and can be converted from real function type
+using StorageObjectCreator = std::function<ObjRef(Path, std::any)>;
 
 class PropertyMeta {
 public:
@@ -52,16 +56,16 @@ public:
         return value_parser_(path_key, value);
     }
 
-    void setProperties(std::shared_ptr<void> instance, ElementProperties& properties) {
+    void setProperties(ObjRef instance, ElementProperties& properties) {
         return properties_setter_(instance, properties);
     }
 
-    std::shared_ptr<void> createObject(GenericRef rfl_generic) {
+    ObjRef createObject(GenericRef rfl_generic) {
         return object_creator_(rfl_generic);
     }
 
     template <typename ArgType>
-    std::shared_ptr<void> createStorageObject(const Path& entity, ArgType&& args) {
+    ObjRef createStorageObject(const Path& entity, ArgType&& args) {
         std::cout << name_->str() << " run creator with typeid " << typeid(ArgType).hash_code() << "for type " << TypeInfo::getTypeName<ArgType>()->str() << std::endl;
         auto it = storage_object_creators_.find(typeid(ArgType));
         if (it == storage_object_creators_.end()) {
@@ -71,9 +75,9 @@ public:
     }
 
     template <typename ArgType>
-    void registerStorageObjectCreator(std::function<std::shared_ptr<void>(Path, ArgType&& arg)> creator) {
+    void registerStorageObjectCreator(std::function<ObjRef(Path, ArgType&& arg)> creator) {
         std::cout << name_->str() << " register creator with typeid " << typeid(ArgType).hash_code() << "for type " << TypeInfo::getTypeName<ArgType>()->str() << std::endl;
-        storage_object_creators_[typeid(ArgType)] = [creator](const Path& entity, std::any arg) -> std::shared_ptr<void> {
+        storage_object_creators_[typeid(ArgType)] = [creator](const Path& entity, std::any arg) -> ObjRef {
             return creator(entity, std::any_cast<ArgType>(arg));
         };
     }
@@ -114,10 +118,12 @@ private:
         return result;
     }
 
+    //static void SetProperties(const std::shared_ptr<void> instance, ElementProperties& properties) {
     template <typename T>
-    static void SetProperties(const std::shared_ptr<void> instance, ElementProperties& properties) {
+    static void SetProperties(ObjRef instance, ElementProperties& properties) {
         if constexpr(refl::trait::is_reflectable_v<T>) {
-            auto instanceT = std::static_pointer_cast<T>(instance);
+            //auto instanceT = std::static_pointer_cast<T>(instance);
+            auto instanceT = instance.as<T>();
             for_each(refl::reflect<T>().members, [&](auto member) {
                 if constexpr (refl::descriptor::has_attribute<Property>(member)) {
                     auto&& prop = refl::descriptor::get_attribute<Property>(member);
@@ -176,21 +182,23 @@ private:
     }
 
     template <typename T>
-    static std::shared_ptr<void> CreateObject(GenericRef rfl_generic) {
+    static ObjRef CreateObject(GenericRef rfl_generic) {
         if constexpr(has_generic_v<T>) {
             using GenericType = ExtractedGenericType<T>;
             //if (rfl_generic) {
                 GenericType obj = rfl::from_generic<GenericType>(rfl_generic).value();
-                return std::static_pointer_cast<void>(std::make_shared<T>(std::make_shared<GenericType>(std::move(obj))));
+                auto typed_ptr = std::make_shared<T>(std::make_shared<GenericType>(std::move(obj)));
+                return ObjRef(TypeInfo::getTypeName<T>(), std::static_pointer_cast<void>(typed_ptr));
             //} else {
                 //GenericType obj;
                 //return std::static_pointer_cast<void>(std::make_shared<T>(std::make_shared<GenericType>(std::move(obj))));
             //}
         } else {
             T obj = rfl::from_generic<T>(rfl_generic).value();
-            return std::static_pointer_cast<void>(std::make_shared<T>(obj));
+            return ObjRef(TypeInfo::getTypeName<T>(), std::static_pointer_cast<void>(std::make_shared<T>(obj)));
         }
     }
+
 };
 
 class TypeManager {
@@ -252,11 +260,11 @@ public:
         return metadata.at(type_name).parsePropertyValue(path_key, value);
     }
 
-    void setProperties(StringRef type_name, std::shared_ptr<void> instance, ElementProperties properties) {
+    void setProperties(StringRef type_name, ObjRef instance, ElementProperties properties) {
         metadata.at(type_name).setProperties(instance, properties);
     }
 
-    std::shared_ptr<void> createObject(StringRef type_name, GenericRef rfl_generic) {
+    ObjRef createObject(StringRef type_name, GenericRef rfl_generic) {
         return metadata.at(type_name).createObject(rfl_generic);
     }
 
@@ -278,19 +286,19 @@ public:
     //}
 
     template <typename ArgType>
-    std::shared_ptr<void> createStorageObject(StringRef type_name, const Path& entity, ArgType&& args) {
+    ObjRef createStorageObject(StringRef type_name, const Path& entity, ArgType&& args) {
         return metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
     }
 
     template <typename T, typename ArgType>
-    std::shared_ptr<T> createStorageObject(const Path& entity, ArgType&& args) {
+    ObjRef createStorageObject(const Path& entity, ArgType&& args) {
         StringRef type_name = getTypeName<T>();
         auto obj = metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
-        return std::static_pointer_cast<T>(obj);
+        return obj;
     }
 
     template <typename ArgType>
-    void registerStorageObjectCreator(StringRef type_name, std::function<std::shared_ptr<void>(Path, ArgType arg)> creator) {
+    void registerStorageObjectCreator(StringRef type_name, std::function<ObjRef(Path, ArgType arg)> creator) {
         metadata.at(type_name).registerStorageObjectCreator<ArgType>(creator);
     }
 

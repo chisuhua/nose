@@ -74,15 +74,15 @@ namespace parser {
         return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
     }
 
-    static std::vector<std::string> splitInitializer(const std::string& str) {
-        std::vector<std::string> elements;
-        std::istringstream stream(str.substr(1, str.size() - 2)); // 去掉最外层大括号
-        std::string elem;
-        while (std::getline(stream, elem, ',')) {
-            elements.push_back(trim(elem));
-        }
-        return elements;
-    }
+    //static std::vector<std::string> splitInitializer(const std::string& str) {
+        //std::vector<std::string> elements;
+        //std::istringstream stream(str.substr(1, str.size() - 2)); // 去掉最外层大括号
+        //std::string elem;
+        //while (std::getline(stream, elem, ',')) {
+            //elements.push_back(trim(elem));
+        //}
+        //return elements;
+    //}
 
     template <typename T>
     ValueType default_parser(const std::string& valueStr);

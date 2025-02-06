@@ -13,8 +13,8 @@ public:
 
     void visit(Path entity, int level) override {
         auto channelObject = entity.getObject("Channel");
-        if (channelObject) {
-            auto channel = std::static_pointer_cast<Channel>(channelObject);
+        if (channelObject.ptr()) {
+            auto channel = channelObject.as<Channel>();
             auto master = channel->getMasterPort();
             master->addObserver([channel, portName = master->getRole() == PortRole::Master ? "Master" : "Slave"]() {
                 channel->portNotified(portName);

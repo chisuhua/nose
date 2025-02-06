@@ -1,7 +1,9 @@
 #include "ObjPtr.h"
+#include "ObjectRemoveVisitor.h"
 #include "doctest/doctest.h"
 #include "Path.h"
 #include "Port.h"
+#include "Tree.h"
 
 TEST_CASE("Port functionality") {
     // 创建两个 Port 实例
@@ -39,5 +41,10 @@ TEST_CASE("Port functionality") {
 
     CHECK(masterNotified);
     CHECK(slaveNotified);
+
+    Tree tree;
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
+
 }
 

@@ -33,6 +33,7 @@ include_directories(
   external/pybind11/include
   src/core/visitor
   src/core/loader
+  src/core/object
   src/core
   src/utils
   src/system
@@ -44,13 +45,6 @@ include_directories(
 # 列出需要编译到动态库中的源文件
 set(core_files
   src/core/TypeManager.h
-  src/core/Port.h
-  src/core/Port.cpp
-  src/core/Bundle.h
-  src/core/Wire.h
-  src/core/Channel.h
-  src/core/Clock.h
-  src/core/Component.h
   src/core/Tree.h
   src/core/Entity.h
   src/core/Entity.cpp
@@ -60,11 +54,17 @@ set(core_files
   src/core/Registry.h
   src/core/Object.h
   src/core/ObjectRflParser.h
+  src/core/object/Port.h
+  src/core/object/Port.cpp
+  src/core/object/Wire.h
+  src/core/object/Channel.h
+  src/core/object/Clock.h
+  src/core/object/Component.h
   src/core/loader/IniLoader.h
   src/core/visitor/Visitor.h
   src/core/visitor/ObjectBuildVisitor.h
   src/core/visitor/ComponentBindVisitor.h
-  src/core/visitor/PortBindVisitor.h
+  src/core/visitor/WireBindVisitor.h
   src/core/visitor/ChannelBindVisitor.h
 )
 
@@ -92,8 +92,10 @@ if(BUILD_DOCTEST)
     tests/test_wire.cpp
     tests/test_component.cpp
     tests/test_channel.cpp
-    tests/test_component_bind.cpp
     tests/test_typemanager.cpp
+    tests/test_component_bind.cpp
+    #tests/test_wire_bind.cpp
+    #tests/test_channel_bind.cpp
   )
 
   add_executable(tests ${test_files})

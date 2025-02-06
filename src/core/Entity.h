@@ -14,6 +14,7 @@
 #include "PathUtils.h"
 #include "StringIntern.h"
 #include "TypeInfo.h"
+#include "Object.h"
 
 template<typename T>
 class Visitor;
@@ -56,83 +57,85 @@ public:
         return PathUtils::join(path_parts, "/");
     }
 
-    std::unordered_map<StringRef, std::shared_ptr<void>> getObjects() const {
+    auto getObjects() const {
         return objects_;
     }
 
     // TODO: object check is storaged
     template <typename T>
-    void setObject(const std::shared_ptr<T>& object) {
+    void setObject(ObjRef object) {
         auto type_name = TypeInfo::getTypeName<T>();
-        objects_[type_name] = std::static_pointer_cast<void>(object);
+        objects_[type_name] = object;
     }
 
     template <typename T>
-    std::shared_ptr<T> getObject() {
+    std::optional<ObjRef> getObject() {
         auto type_name = TypeInfo::getTypeName<T>();
         auto it = objects_.find(type_name);
         if (it != objects_.end()) {
-            return std::static_pointer_cast<T>(it->second);
+            return it->second;
         }
         auto it2 = objectsInSerialize_.find(type_name);
         if (it2 != objectsInSerialize_.end()) {
             deserialize(type_name);
-            auto obj = objects_[type_name];
-            return std::static_pointer_cast<T>(obj); 
+            auto obj = objects_.at(type_name);
+            return obj; 
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     template <typename T, typename ObjType>
-    std::shared_ptr<T> getOrCreateObject(std::shared_ptr<ObjType> generic) {
+    ObjRef getOrCreateObject(std::shared_ptr<ObjType> generic) {
         auto obj = getObject<T>();
-        if (obj) return obj;
+        if (obj) return obj.value();
         auto type_name = TypeInfo::getTypeName<T>();
 
-        return std::static_pointer_cast<T>(getOrCreateObject(type_name, std::static_pointer_cast<void>(generic)));
+        return getOrCreateObject(type_name, std::static_pointer_cast<void>(generic));
     }
 
     template <typename T>
-    std::shared_ptr<T> getOrCreateObject(GenericRef rfl_generic) {
+    ObjRef getOrCreateObject(GenericRef rfl_generic) {
         auto obj = getObject<T>();
-        if (obj) return obj;
+        if (obj) return obj.value();
         auto type_name = TypeInfo::getTypeName<T>();
 
-        return std::static_pointer_cast<T>(getOrCreateObject(type_name, rfl_generic));
+        return getOrCreateObject(type_name, rfl_generic);
     }
 
     template <typename T>
-    std::shared_ptr<T> getOrCreateObject() {
+    ObjRef getOrCreateObject() {
         auto obj = getObject<T>();
-        if (obj) return obj;
+        if (obj) return obj.value();
         auto type_name = TypeInfo::getTypeName<T>();
 
-        return std::static_pointer_cast<T>(getOrCreateObject(type_name));
+        return getOrCreateObject(type_name);
     }
 
-    //template <typename T>
-    //void removeObject() {
-        //auto type_name = TypeInfo::getTypeName<T>();
-        //auto obj = objects_[type_name];
-        //Registry::getInstance()->removeObject<T, Entity>(this);
-    //}
+    template <typename T>
+    void removeObject() {
+        auto type_name = TypeInfo::getTypeName<T>();
+        removeObject(type_name);
+    }
 
-    //void removeObject(StringRef type_name, std::shared_ptr<void> object) {
-        //objects_[type_name] = object;
-    //}
+    void removeObject(StringRef type_name) ;
 
     // TODO: object check is storaged
-    void setObject(StringRef type_name, std::shared_ptr<void> object) {
-        objects_[type_name] = object;
+    void setObject(StringRef type_name, ObjRef object) {
+        objects_.emplace(type_name,  object);
     }
-    std::shared_ptr<void> getObject(StringRef type_name) const {
+    std::optional<ObjRef> getObject(StringRef type_name) const {
         auto it = objects_.find(type_name);
-        return (it != objects_.end()) ? it->second : nullptr;
+        if (it != objects_.end()) {
+            //std::make_optional(it->second);
+            return it->second;;
+        } else {
+            return std::nullopt;
+        }
     }
 
-    std::shared_ptr<void> getOrCreateObject(StringRef type_name);
-    std::shared_ptr<void> getOrCreateObject(StringRef type_name, GenericRef rfl_generic);
-    std::shared_ptr<void> getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic);
+    ObjRef getOrCreateObject(StringRef type_name);
+    ObjRef getOrCreateObject(StringRef type_name, GenericRef rfl_generic);
+    ObjRef getOrCreateObject(StringRef type_name, std::shared_ptr<void> generic);
 
     const auto& getChildren() const { return children_; }
 
@@ -201,13 +204,13 @@ public:
         return current_entity;
     }
 
-    std::uint32_t getHash() { return hash_;}
+    EntityId getHash() { return hash_;}
 
 private:
     std::string name_;
     std::uint32_t hash_;
     std::unordered_map<std::string, EntityPtr> children_;
-    std::unordered_map<StringRef, std::shared_ptr<void>> objects_;
+    std::unordered_map<StringRef, ObjRef> objects_;
     std::unordered_map<StringRef, ElementProperties> properties_;
     std::unordered_map<StringRef, rfl::Generic> objectsInSerialize_;
     std::weak_ptr<Entity> parent_;

@@ -1,5 +1,7 @@
 #include "doctest/doctest.h"
 #include "TypeManager.h"
+#include "ObjectRemoveVisitor.h"
+#include "Tree.h"
 #include "Port.h"
 //#include "Wire.h"
 //#include "Channel.h"
@@ -22,6 +24,10 @@ TEST_CASE("Basic TypeManager registration") {
     //CHECK(typeManager.getPropertyMeta().count("Clock"_hs) == 1);
     //CHECK(typeManager.getTypeConstructors().count("SrcUnit1") == 1);
     //CHECK(typeManager.getTypeConstructors().count("DstUnit1") == 1);
+ 
+    Tree tree;
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
 }
 
 //TEST_CASE("Port creation and binding") {

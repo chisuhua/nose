@@ -1,35 +1,36 @@
-#ifndef CHANNEL_H
-#define CHANNEL_H
+#ifndef WIRE_H
+#define WIRE_H
 
-#include <iostream>
-#include "Wire.h"
+#include "Port.h"
+#include "Path.h"
+#include <stdexcept>
+#include <rfl.hpp>
 #include "Registry.h"
 
-struct ChannelData {
+class Wire;
+
+struct WireData {
     EntityHashType entity_hash;
     ObjPtr<Port> master_;
     ObjPtr<Port> slave_;
     PortRole role_;
+    uint64_t test_only;
 };
 
-struct ChannelConnect {
+struct WireConnect {
   std::string master_name;
   std::string slave_name;
 };
 
-class Channel {
+class Wire {
 public:
-    using GenericType = std::shared_ptr<ChannelData>;
+    using GenericType = std::shared_ptr<WireData>;
     GenericType generic_;
 
-    explicit Channel(GenericType generic) 
+    explicit Wire(GenericType generic) 
         : generic_(generic) {}
 
-    // 虚拟析构函数
-    //virtual ~Channel() override {
-        //delete masterPort_;
-        //delete slavePort_;
-    //}
+    virtual ~Wire() {};
 
     virtual void bind() {
         if (!generic_->master_.ptr()) {
@@ -52,7 +53,6 @@ public:
 
         master_port->bind(slave_port);
         slave_port->bind(master_port);
-
     }
 
     void setMasterPort(ObjPtr<Port> master) {
@@ -73,26 +73,21 @@ public:
         return generic_->slave_;
     }
 
-    ChannelConnect connect_;
-
-
-    virtual void tick() {
-        std::cout << "Channel clock update" << std::endl;
-    }
-
-    virtual void portNotified(const std::string& portName) {
-        std::cout << "Channel notified for port: " << portName << std::endl;
-    }
+    uint64_t test_only;
+    WireConnect connect_;
 };
 
-// ValueType ParsePort(const std::string& valueStr) {
+// ValueType ParseConnection(const std::string& valueStr) {
 //     // TODO
 //     return ValueType(std::any(valueStr));
 // };
 
 REFL_AUTO(
-    type(Channel),
+    type(Wire),
+    field(test_only),
     field(connect_)
 );
-REGISTER_OBJECT(Channel)
-#endif
+REGISTER_OBJECT(Wire)
+
+#endif // W
+

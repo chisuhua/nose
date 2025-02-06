@@ -163,6 +163,13 @@ public:
         return entity_ptr_.get() != other.entity_ptr_.get();
     }
 
+    /// Returns the underlying shared_ptr
+    EntityPtr& ptr() { return entity_ptr_; }
+
+    /// Returns the underlying shared_ptr
+    const EntityPtr& ptr() const { return entity_ptr_; }
+
+
     const Entity* getRawPointer() const {
         return entity_ptr_.get();
     }
@@ -201,21 +208,36 @@ public:
     }
 
     template <typename T>
-    void setObject(const std::shared_ptr<T>& object) {
+    void setObject(ObjRef object) {
         entity_ptr_->setObject<T>(object);
     }
 
     template <typename T>
-    auto getObject() const {
-        return entity_ptr_->template getObject<T>();
+    ObjPtr<T> getObject() const {
+        auto obj = entity_ptr_->template getObject<T>();
+        return ObjPtr<T>::make(obj->template as<T>());
     }
 
-    void setObject(StringRef type_name, std::shared_ptr<void> object) {
+    void setObject(StringRef type_name, ObjRef object) {
         entity_ptr_->setObject(type_name, object);
     }
 
-    std::shared_ptr<void> getObject(StringRef type_name) const {
-        return entity_ptr_->getObject(type_name);
+    template <typename T>
+    auto removeObject() {
+        return entity_ptr_->removeObject<T>();
+    }
+
+    void removeObject(StringRef type_name) {
+        entity_ptr_->removeObject(type_name);
+    }
+
+    ObjRef getObject(StringRef type_name) const {
+        auto obj =  entity_ptr_->getObject(type_name);
+        if (obj.has_value()) {
+            return obj.value();
+        } else {
+            return ObjRef(""_hs, nullptr);
+        }
     }
 
     template <class T>
@@ -227,20 +249,23 @@ public:
             using GenericType = ExtractedGenericType<T>;
             //using GenericObj = typename std::pointer_traits<GenericType>::element_type;
            
-            std::shared_ptr<GenericType> generic_ptr;
+            //std::shared_ptr<GenericType> generic_ptr;
+            //ObjRef generic_ptr;
             if (rfl_generic) {
-                generic_ptr = entity_ptr_->getOrCreateObject<GenericType>(std::cref(rfl_generic.value()));
+                auto generic_ptr = entity_ptr_->getOrCreateObject<GenericType>(std::cref(rfl_generic.value()));
+                auto ptr = entity_ptr_->getOrCreateObject<T>(std::move(generic_ptr.template as<GenericType>()));
+                return ObjPtr<T>::make(std::move(ptr.template as<T>()));
             } else {
-                generic_ptr = entity_ptr_->getOrCreateObject<GenericType>();
+                auto generic_ptr = entity_ptr_->getOrCreateObject<GenericType>();
+                auto ptr = entity_ptr_->getOrCreateObject<T>(generic_ptr.template as<GenericType>());
+                return ObjPtr<T>::make(std::move(ptr.template as<T>()));
             }
-            auto ptr = entity_ptr_->getOrCreateObject<T>(generic_ptr);
-            return ObjPtr<T>::make(std::move(ptr));
         } else {
             std::shared_ptr<T> ptr;
             if (rfl_generic) {
-                ptr = entity_ptr_->getOrCreateObject<T>(rfl_generic.value());
+                ptr = entity_ptr_->getOrCreateObject<T>(rfl_generic.value()).template as<T>();
             } else {
-                ptr = entity_ptr_->getOrCreateObject<T>();
+                ptr = entity_ptr_->getOrCreateObject<T>().template as<T>();
             }
             return ObjPtr<T>::make(std::move(ptr));
         }

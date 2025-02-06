@@ -1,4 +1,6 @@
 #include "doctest/doctest.h"
+#include "ObjectRemoveVisitor.h"
+#include "Tree.h"
 #include "Channel.h"
 
 TEST_CASE("Channel functionality") {
@@ -41,5 +43,9 @@ TEST_CASE("Channel functionality") {
 
     // 模拟时钟更新
     channel1->tick();
+
+    Tree tree;
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
 }
 

@@ -51,6 +51,8 @@ struct ExtractGenericType<T, std::enable_if_t<has_generic_v<T>>> {
 template<typename T>
 using ExtractedGenericType = typename ExtractGenericType<T>::type;
 
+using VoidPtrType = std::shared_ptr<void>;
+using VoidWeakPtrType = std::weak_ptr<void>;
 
 class TypeInfo
 {
@@ -88,9 +90,13 @@ public:
         return name_;
     }
 
+    const std::type_info& ti() const {
+        return ti_;
+    }
+
 private:
 
-    const std::type_info& type_;
+    const std::type_info& ti_;
 
     // were only storing the name for demonstration purposes,
     // but this can be extended to hold other properties as well
@@ -98,7 +104,7 @@ private:
     StringRef name_;
 
     TypeInfo(const std::type_info& ti)
-        : type_(ti)
+        : ti_(ti)
         , name_(demangle(ti.name()))
     {
         //name_ = String::intern(demangle(ti.name()));

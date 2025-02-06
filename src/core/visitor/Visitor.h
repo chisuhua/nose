@@ -2,7 +2,6 @@
 #define VISITOR_H
 
 #include <memory>
-#include <string>
 #include "Path.h"
 #include "TypeManager.h"
 #include "StringIntern.h"
@@ -18,8 +17,8 @@ public:
         }
         for (const auto& [key, object] : entity.getObjects()) {
             auto obj_typetag = TypeManager::instance().getTypeTag(key);
-            if (TypeInfo::getTypeName<T>() == obj_typetag) {
-                auto type_obj = std::static_pointer_cast<T>(object);
+            if (TypeInfo::getTypeName<T>() == "void"_hs or (TypeInfo::getTypeName<T>() == obj_typetag)) {
+                auto type_obj = object.as<T>();
                 visitObject(type_obj, key, entity);
             }
         }

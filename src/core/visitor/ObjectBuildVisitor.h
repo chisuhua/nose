@@ -1,6 +1,7 @@
-#pragma once
+#ifndef OBJECT_BUILD_VISITOR_H
+#define OBJECT_BUILD_VISITOR_H
+
 #include "Visitor.h"
-#include "Tree.h"
 #include "Path.h"
 #include "TypeManager.h"
 
@@ -10,7 +11,7 @@ public:
 
     void visit(Path entity, int level) override {
         for (const auto& [type_name, serialize] : entity.getSerializies()) {
-            if (!entity.getObject(type_name)) {
+            if (!entity.getObject(type_name).ptr()) {
                 // create obj from serialize first
                 //auto&& obj = typeManager_.createObject(type_name, serialize);
                 // create obj in StoragePool
@@ -23,7 +24,7 @@ public:
             }
         }
         for (const auto& [type_name, properties] : entity.getProperties()) {
-            if (!entity.getObject(type_name)) {
+            if (!entity.getObject(type_name).ptr()) {
                 //std::cout << "entry set prroperty object: " << entity.getPath() << "\n";
                 //auto instance = registry_->createObjectByName(type_name);
                 auto instance = typeManager_.createStorageObject(type_name, entity, std::nullopt);
@@ -45,3 +46,4 @@ private:
     //std::shared_ptr<Registry> registry_;
 };
 
+#endif // OBJECT_BUILD_VISITOR_H

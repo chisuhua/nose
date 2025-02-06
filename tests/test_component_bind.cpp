@@ -5,6 +5,7 @@
 #include "Wire.h"
 #include "Tree.h"
 #include "PrinterVisitor.h"
+#include "ObjectRemoveVisitor.h"
 
 TEST_CASE("ComponentBindVisitor functionality") {
     Tree tree;
@@ -71,5 +72,11 @@ TEST_CASE("ComponentBindVisitor functionality") {
     // 检查端口是否已更新
     CHECK(componentA->isPortUpdated("port1") == true);
     CHECK(componentA->isPortUpdated("port2") == true);
+
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
+
+
+
 }
 

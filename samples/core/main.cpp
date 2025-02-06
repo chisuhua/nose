@@ -7,12 +7,12 @@
 #include "IniLoader.h"
 #include "Tree.h"
 #include "ObjectBuildVisitor.h"
-#include "PortBindVisitor.h"
+#include "WireBindVisitor.h"
 #include "ComponentBindVisitor.h"
 #include "ChannelBindVisitor.h"
 #include "PrinterVisitor.h"
 #include "Port.h"
-#include "Event.h"
+//#include "Event.h"
 #include "ComponentSrc.h"
 #include "ComponentDst.h"
 
@@ -33,20 +33,20 @@ int main() {
         ComponentBindVisitor componentBindVisitor;
         tree.accept(componentBindVisitor);
 
-        PortBindVisitor portBindVisitor(tree);
+        WireBindVisitor portBindVisitor(tree);
         tree.accept(portBindVisitor);
 
         ChannelBindVisitor channelBindVisitor(tree);
         tree.accept(channelBindVisitor);
 
         auto srcEntity = tree.findEntity("/a/b:ComponentSrc");
-        auto srcUnit1 = std::static_pointer_cast<ComponentSrc>(srcEntity->getObject("ComponentSrc"));
+        auto srcUnit1 = srcEntity->getObject("ComponentSrc")->as<ComponentSrc>();
 
         auto dstEntity = tree.findEntity("/a/b/c:ComponentDst");
-        auto dstUnit1 = std::static_pointer_cast<ComponentDst>(dstEntity->getObject("ComponentDst"));
+        auto dstUnit1 = dstEntity->getObject("ComponentDst")->as<ComponentDst>();
 
         auto clockEntity = tree.findEntity("/a/clock/clock1:Clock");
-        auto clock = std::static_pointer_cast<Clock>(clockEntity->getObject("Clock"));
+        auto clock = clockEntity->getObject("Clock")->as<Clock>();
 
         if (clock) {
             clock->tick();

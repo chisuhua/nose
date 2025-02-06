@@ -74,7 +74,7 @@ class ObjPtr<T, std::enable_if_t<!has_generic_v<T>>> {
   /// return an Error, if the shared_ptr is not set.
   static ObjPtr<T> make(std::shared_ptr<T>&& _ptr) {
     if (!_ptr) {
-      return Error("std::shared_ptr was a nullptr.");
+      throw std::runtime_error("std::shared_ptr was a nullptr.");
     }
     return ObjPtr<T>(std::move(_ptr));
   }
@@ -83,7 +83,7 @@ class ObjPtr<T, std::enable_if_t<!has_generic_v<T>>> {
   /// return an Error, if the shared_ptr is not set.
   static ObjPtr<T> make(const std::shared_ptr<T>& _ptr) {
     if (!_ptr) {
-      return Error("std::shared_ptr was a nullptr.");
+      throw std::runtime_error("std::shared_ptr was a nullptr.");
     }
     return ObjPtr<T>(_ptr);
   }

@@ -2,8 +2,6 @@
 #define PRINTER_VISITOR_H
 
 #include "Visitor.h"
-#include "Tree.h"
-#include "Component.h"
 
 class PrinterVisitor : public Visitor<void> {
 public:

@@ -2,10 +2,7 @@
 #include "doctest/doctest.h"
 #include <iostream>
 #include <string>
-#include <variant>
-#include <unordered_map>
 #include <memory>
-#include <functional>
 #include <refl.hpp>
 #include "IniLoader.h"
 #include "Property.h"
@@ -14,6 +11,8 @@
 #include "Registry.h"
 #include "ObjectBuildVisitor.h"
 #include "PrinterVisitor.h"
+#include "ObjectRemoveVisitor.h"
+#include "Tree.h"
 
 // Simple enum and its parsing function
 enum class Orientation {
@@ -126,7 +125,7 @@ REGISTER_OBJECT(CustomObject)
 REGISTER_OBJECT(Person)
 //REGISTER_OBJECT(CustomTop)
 
-TEST_CASE("Basic Property") {
+TEST_CASE("Property") {
     TypeManager& typeManager = TypeManager::instance();
 
     //StorageObjectCreator createStorageObjectGeneric = [](Path entity, std::any args) -> std::shared_ptr<void> {
@@ -160,12 +159,12 @@ TEST_CASE("Basic Property") {
         CHECK(path_a_b.isValid());
 
         auto obj1 = path_a_b.getObject<CustomObject>();
-        CHECK(obj1 != nullptr);
+        CHECK(obj1.ptr());
 
         auto path_a_b_c = Path("c", path_a_b);
 
         auto obj2 = path_a_b_c.getObject<CustomObject>();
-        CHECK(obj2 != nullptr);
+        CHECK(obj2.ptr());
 
         CHECK(obj1->intval == 30);
         CHECK(obj2->intval == 50);
@@ -202,5 +201,9 @@ TEST_CASE("Basic Property") {
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
+
+
 }
 

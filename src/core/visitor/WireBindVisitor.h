@@ -3,14 +3,14 @@
 #include "Tree.h"
 #include "Wire.h"
 
-class PortBindVisitor : public Visitor<void> {
+class WireBindVisitor : public Visitor<void> {
 public:
-    explicit PortBindVisitor(Tree& tree) : tree_(tree) {}
+    explicit WireBindVisitor(Tree& tree) : tree_(tree) {}
 
     void visit(Path entity, int level) override {
         auto wireObject = entity.getObject("Wire");
-        if (wireObject) {
-            auto wire = std::static_pointer_cast<Wire>(wireObject);
+        if (wireObject.ptr()) {
+            auto wire = wireObject.as<Wire>();
             wire->bind();
         }
 

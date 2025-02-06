@@ -1,4 +1,6 @@
 #include "doctest/doctest.h"
+#include "ObjectRemoveVisitor.h"
+#include "Tree.h"
 #include "Wire.h"
 
 TEST_CASE("Wire functionality") {
@@ -38,6 +40,10 @@ TEST_CASE("Wire functionality") {
 
     CHECK(port4->hasData());
     CHECK(port4->receive<int>() == 44);
+
+    Tree tree;
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
 
 
     //port2->send(std::string("Hello, World!"));

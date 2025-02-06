@@ -1,5 +1,7 @@
 #include "doctest/doctest.h"
 #include "PortBindVisitor.h"
+#include "ObjectRemoveVisitor.h"
+#include "Tree.h"
 #include "Channel.h"
 #include "Port.h"
 #include "Entity.h"
@@ -31,5 +33,12 @@ TEST_CASE("PortBindVisitor functionality") {
     // 通知观察者
     channel1->masterPort_->notifyObservers();
     channel1->slavePort_->notifyObservers();
+
+    Tree tree;
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
+
+
+
 }
 
