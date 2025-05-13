@@ -74,6 +74,7 @@ public:
         if (is_object_path) {
             auto obj_parts = this_path.getObjectPath();
             if (obj_parts.size() == 0) {
+                // if ini line start with {....} or [...] , we use it to deseriarizle 
                 this_path.setSerialize(value_str);
                 this_path.deserialize();
             } else if (obj_parts.size() == 1) {
@@ -81,7 +82,12 @@ public:
                 ValueType value = typeManager_.parsePropertyValue(this_path.getTypeName(), obj_parts[0]->str(), value_str);
                 this_path.setProperty(obj_parts[0]->str(), value);
             } else {
+                throw std::runtime_error("init path currently don't support multilevel object path");
                 // TODO tracing object_path
+            }
+            if (start_path.isObjectPath()) {
+                ValueType value = typeManager_.parsePropertyValue(start_path.getTypeName(), this_path.getName(), this_path.getTypeName()->str());
+                start_path.setProperty(this_path.getName(), value);
             }
         }
         return this_path;

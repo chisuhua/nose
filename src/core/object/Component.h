@@ -30,6 +30,7 @@ public:
 
     // 添加端口
     void addPort(const std::string& name, ObjPtr<Port> port) {
+        std::cout << "  add component port: port_name=" << name << " port_obj " << port.ptr() << "\n";
         generic_->ports_[name] = port;
     }
 
@@ -55,6 +56,13 @@ public:
         return generic_->portsUpdated_[portName];
     }
 
+    template <typename T>
+    void sendPacket(const T& event, const std::string& portName) {
+        //auto port = std::dynamic_pointer_cast<Port<bundle::ValidReady>>(getPort(portName));
+        auto port = getPort(portName);
+        port->send(event);
+        std::cout << "ComponentSrc sending event: data = " << event.data << ", valid = " << event.valid << std::endl;
+    }
 
     // 时钟更新
     virtual void tick() {

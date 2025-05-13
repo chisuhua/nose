@@ -33,8 +33,9 @@ public:
         if (current.isObjectPath() ) {
             auto entity_name = name;
             auto pos = entity_name.find(':');
-            bool find_object = false;
+            //bool find_object = false;
             if (pos != std::string::npos) {
+                // find a object
                 auto type_name = PathUtils::parseTypeName(name.substr(pos + 1));
                 object_type_ = type_name;
                 entity_name = entity_name.substr(0, pos);
@@ -77,6 +78,7 @@ public:
 
                 auto child_entity_ptr = current.getChildEntity(entity_name);
                 entity_ptr_ = child_entity_ptr;
+                //entity_ptr_ = current.getOrCreateChild(entity_name);
             } else {
                 auto parent_entity_ptr = current.entity_ptr_->getParent();
                 entity_ptr_ = parent_entity_ptr;
@@ -182,6 +184,10 @@ public:
         return entity_ptr_ != nullptr;
     }
 
+    void clear() {
+        entity_ptr_ = nullptr;
+    }
+
     void addChild(const Path& child) {
         entity_ptr_->addChild(std::const_pointer_cast<Entity>(child.entity_ptr_));
     }
@@ -253,7 +259,7 @@ public:
             //ObjRef generic_ptr;
             if (rfl_generic) {
                 auto generic_ptr = entity_ptr_->getOrCreateObject<GenericType>(std::cref(rfl_generic.value()));
-                auto ptr = entity_ptr_->getOrCreateObject<T>(std::move(generic_ptr.template as<GenericType>()));
+                auto ptr = entity_ptr_->getOrCreateObject<T>(generic_ptr.template as<GenericType>());
                 return ObjPtr<T>::make(std::move(ptr.template as<T>()));
             } else {
                 auto generic_ptr = entity_ptr_->getOrCreateObject<GenericType>();

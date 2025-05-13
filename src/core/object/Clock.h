@@ -63,7 +63,18 @@ public:
         }
     }
 
+    virtual void bind() {
+        for (auto& component : components_) {
+            generic_->components_.push_back(Path::make(component).make_object<Component>());
+        }
+        for (auto& channel : channels_) {
+            generic_->channels_.push_back(Path::make(channel).make_object<Channel>());
+        }
+    }
+
     uint64_t freq_ {0};
+    std::vector<std::string> components_;
+    std::vector<std::string> channels_;
 };
 
 //ValueType ParseComponents(const std::string& valueStr) {
@@ -76,7 +87,9 @@ public:
 
 REFL_AUTO(
     type(Clock),
-    field(freq_, Property(&Clock::parseFrequency))
+    field(freq_, Property(&Clock::parseFrequency)),
+    field(components_),
+    field(channels_)
     )
 REGISTER_OBJECT(Clock)
 

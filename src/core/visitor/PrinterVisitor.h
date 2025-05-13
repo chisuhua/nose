@@ -18,7 +18,11 @@ public:
 private:
     void printEntity(Path entity, int level) {
         std::string indent(level * 2, ' ');
-        std::cout << indent << entity.getName() << "\n";
+        std::cout << indent << entity.getName() << ":";
+        for (const auto& obj : entity.getObjects()) {
+          std::cout << obj.first->str() << ",";  
+        }
+        std::cout << "\n";
     }
 };
 

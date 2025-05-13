@@ -3,6 +3,18 @@
 
 #include "Component.h"
 
+//struct ComponentDstData : public ComponentData {
+//    uint64_t testdat_only;
+//};
+//struct ComponentDstData {
+//    // 端口映射
+//    std::map<std::string,ObjPtr<Port>> ports_;
+//    // 端口更新标志映射
+//    std::map<std::string, bool> portsUpdated_;
+//
+//    uint64_t test_only;
+//};
+
 class ComponentDst : public Component {
 public:
     using GenericType = std::shared_ptr<ComponentData>;

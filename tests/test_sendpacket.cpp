@@ -1,4 +1,6 @@
+#include "doctest/doctest.h"
 #include <iostream>
+#include <fstream>
 #include <future>
 #include <thread>
 #include <chrono>
@@ -10,10 +12,11 @@
 #include "WireBindVisitor.h"
 #include "ComponentBindVisitor.h"
 #include "ChannelBindVisitor.h"
+#include "ObjectRemoveVisitor.h"
 #include "PrinterVisitor.h"
 #include "Port.h"
 //#include "Event.h"
-#include "Component.h"
+//#include "ComponentSrc.h"
 //#include "ComponentDst.h"
 
 struct Event {
@@ -21,14 +24,49 @@ struct Event {
     bool valid;
 };
 
-int main() {
+
+
+//int main() {
+TEST_CASE("SendPacket") {
     TypeManager& typeManager = TypeManager::instance();
-#if 1
     Tree tree;
     IniLoader loader(typeManager);
 
+    std::ofstream ofile("test_SendPacket_config.ini");
+    CHECK(ofile);
+
+    ofile << 
+R"([/a/b:Component]
+port1:Port/role_ = master
+
+[/a/b/c:Component]
+port1:Port/role_ = slave
+port_link:Port/role_ = master
+
+[/a/b/d:Component]
+port_link:Port/role_ = slave
+
+[/a/connect]
+wire:Wire/connect_ = {"master_name":"/a/b/port1", "slave_name":"/a/b/c/port1"}
+link1:Channel/connect_ = {"master_name":"/a/b/c/port_link", "slave_name":"/a/b/d/port_link"}
+
+[/a/clock/clock1:Clock]
+freq_ = 1G
+components_ = ["/a/b", "/a/b/c", "/a/b/d"]
+channels_ = ["/a/connect/link1"])" << std::endl;
+
+    ofile.close();
+
     try {
-        loader.load("samples/core/config.ini", tree);
+        PrinterVisitor printerVisitor;
+        tree.accept(printerVisitor);
+
+        ObjectRemoveVisitor object_remover;
+        tree.accept(object_remover);
+
+        tree.accept(printerVisitor);
+
+        loader.load("test_SendPacket_config.ini", tree);
 
         ObjectBuildVisitor builderVisitor(typeManager);
         tree.accept(builderVisitor);
@@ -43,7 +81,6 @@ int main() {
         tree.accept(channelBindVisitor);
 
         // 使用 PrinterVisitor 打印树结构
-        PrinterVisitor printerVisitor;
         tree.accept(printerVisitor);
 
 
@@ -72,6 +109,8 @@ int main() {
             //*dstPort >> io;
             Event io = dstPort->receive<Event>();
             std::cout << "ComponentDst received event: data = " << io.data << ", valid = " << io.valid << std::endl;
+            CHECK(io.data == 42);
+            CHECK(io.valid == true);
         });
 
         std::cout << "Component sending event: data of Event{42, true}" << std::endl;
@@ -81,10 +120,10 @@ int main() {
 
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
+        CHECK(false);
     }
-    std::cout << "exsting" << std::endl;
-    exit(0);
-#endif
-    return 0;
+
+    ObjectRemoveVisitor object_remover;
+    tree.accept(object_remover);
 }
 

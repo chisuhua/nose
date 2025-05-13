@@ -144,8 +144,44 @@ TEST_CASE("Property") {
     Tree tree;
     IniLoader loader(typeManager);
 
+    std::ofstream ofile("test_Property_config.ini");
+    CHECK(ofile);
+
+    ofile << 
+R"(
+[/a:CustomObject]
+intval = 10
+floatval = 1.2
+strval = foo
+orientation = horizontal
+person = {"first_name":"a","last_name":"Simpson","age":43}
+
+[/a/b:CustomObject]
+intval = 30
+floatval = 2.4
+strval = hello
+orientation = horizontal
+person = {"first_name":"b","last_name":"Simpson","age":44}
+person_a:Person = {"first_name":"ba","last_name":"Simpson","age":44}
+person_b:Person = {"first_name":"bb","last_name":"Simpson","age":44}
+persons = [{"first_name":"bBart","last_name":"bSimpson","age":10},{"first_name":"bbBart","last_name":"bbSimpson","age":10}]
+
+
+[/a/b/c:CustomObject]
+intval = 50
+floatval = 4.8
+strval = world
+orientation = vertical
+person = {"first_name":"c","last_name":"Simpson","age":45}
+person_c:Person = {"first_name":"cc","last_name":"Simpson","age":44}
+person_d:Person = {"first_name":"cd","last_name":"Simpson","age":44}
+persons = [{"first_name":"cBart","last_name":"cSimpson","age":10},{"first_name":"ccBart","last_name":"ccSimpson","age":10}]
+)" << std::endl;
+
+    ofile.close();
+
     try {
-        loader.load("tests/config.ini", tree);
+        loader.load("test_Property_config.ini", tree);
 
         // 使用 ObjectBuilderVisitor 创建对象
         ObjectBuildVisitor builderVisitor(typeManager);
@@ -200,6 +236,7 @@ TEST_CASE("Property") {
 
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
+        CHECK(false);
     }
     ObjectRemoveVisitor object_remover;
     tree.accept(object_remover);

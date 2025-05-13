@@ -24,6 +24,8 @@ if(NOT doctest_FOUND)
   target_sources(doctest INTERFACE external/doctest/doctest/parts/doctest.cpp)
 endif()
 
+option(BUILD_SHARED_LIBS "Build shared libraries by default" ON)
+set(REFLECTCPP_BUILD_SHARED ${BUILD_SHARED_LIBS})
 add_subdirectory(external/reflect-cpp) # Add this project as a subdirectory
 
 # 添加其他头文件路径
@@ -36,8 +38,8 @@ include_directories(
   src/core/object
   src/core
   src/utils
-  src/system
-  src/system/graph
+  #src/system
+  #src/system/graph
   external/cpputils
 )
 
@@ -94,6 +96,7 @@ if(BUILD_DOCTEST)
     tests/test_channel.cpp
     tests/test_typemanager.cpp
     tests/test_component_bind.cpp
+    tests/test_sendpacket.cpp
     #tests/test_wire_bind.cpp
     #tests/test_channel_bind.cpp
   )

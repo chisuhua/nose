@@ -90,9 +90,9 @@ class ObjPtr<T, std::enable_if_t<!has_generic_v<T>>> {
 
   ObjPtr() : ptr_(nullptr) {}
 
-  ObjPtr(const ObjPtr<T>& _other) = default;
+  ObjPtr(const ObjPtr<T>& _other) : ptr_(_other.ptr_) {}
 
-  ObjPtr(ObjPtr<T>&& _other) = default;
+  ObjPtr(ObjPtr<T>&& _other) noexcept : ptr_(std::move(_other.ptr_)) {}
 
   template <class U>
   ObjPtr(const ObjPtr<U>& _other) : ptr_(_other.ptr()) {}
@@ -139,10 +139,20 @@ class ObjPtr<T, std::enable_if_t<!has_generic_v<T>>> {
   }
 
   /// Move assignment operator
-  ObjPtr<T>& operator=(ObjPtr<T>&& _other) noexcept = default;
+  ObjPtr<T>& operator=(ObjPtr<T>&& _other) noexcept {
+    if (this != &_other) {
+      ptr_ = std::move(_other.ptr_);
+    }
+    return *this;
+  }
 
   /// Copy assignment operator
-  ObjPtr<T>& operator=(const ObjPtr<T>& _other) = default;
+  ObjPtr<T>& operator=(const ObjPtr<T>& _other) {
+    if (this != &_other) {
+      ptr_ = _other.ptr_;
+    }
+    return *this;
+  }
 
  private:
   /// Only make is allowed to use this constructor.
@@ -226,9 +236,9 @@ class ObjPtr<T, std::enable_if_t<has_generic_v<T>>> {
 
   ObjPtr() : ptr_(nullptr) {}
 
-  ObjPtr(const ObjPtr<T>& _other) = default;
+  ObjPtr(const ObjPtr<T>& _other) : ptr_(_other.ptr_) {}
 
-  ObjPtr(ObjPtr<T>&& _other) = default;
+  ObjPtr(ObjPtr<T>&& _other) noexcept : ptr_(std::move(_other.ptr_)) {}
 
   template <class U>
   ObjPtr(const ObjPtr<U>& _other) : ptr_(_other.ptr()) {}
@@ -275,14 +285,20 @@ class ObjPtr<T, std::enable_if_t<has_generic_v<T>>> {
   }
 
   /// Move assignment operator
-  ObjPtr<T>& operator=(ObjPtr<T>&& _other) noexcept = default;
+  ObjPtr<T>& operator=(ObjPtr<T>&& _other) noexcept {
+    if (this != &_other) {
+      ptr_ = std::move(_other.ptr_);
+    }
+    return *this;
+  }
 
   /// Copy assignment operator
-  ObjPtr<T>& operator=(const ObjPtr<T>& _other) = default;
-  //ObjPtr<T>& operator=(const ObjPtr<T>& _other) {
-      //ptr_ = _other.ptr_;
-      //return *this;
-  //}
+  ObjPtr<T>& operator=(const ObjPtr<T>& _other) {
+    if (this != &_other) {
+      ptr_ = _other.ptr_;
+    }
+    return *this;
+  }
 
  private:
   /// Only make is allowed to use this constructor.

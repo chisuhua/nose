@@ -287,14 +287,32 @@ public:
 
     template <typename ArgType>
     ObjRef createStorageObject(StringRef type_name, const Path& entity, ArgType&& args) {
-        return metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
+        if (typeid(ArgType) == typeid(std::shared_ptr<void>)) {
+            return metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
+        } else {
+            // TODO use Generic Instalf Data, but reuire all Object 's Generic Type is hardcode with Generic poxfix'
+            auto it = metadata.find(type_name + "Data" );
+            if (it == metadata.end()) {
+               return metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
+            }
+            auto obj_generic = metadata.at(type_name + "Data").createStorageObject(entity, std::forward<ArgType>(args));
+            return metadata.at(type_name).createStorageObject(entity, obj_generic.ptr());
+        }
+        //return metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
     }
 
     template <typename T, typename ArgType>
     ObjRef createStorageObject(const Path& entity, ArgType&& args) {
         StringRef type_name = getTypeName<T>();
-        auto obj = metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
-        return obj;
+        if constexpr(has_generic_v<T>) {
+            using GenericType = typename T::GenericType::element_type;
+            auto obj_generic = createStorageObject<GenericType>(entity, args);
+            auto obj = metadata.at(type_name).createStorageObject(entity, obj_generic.ptr());
+            return obj;
+        } else {
+            auto obj = metadata.at(type_name).createStorageObject(entity, std::forward<ArgType>(args));
+            return obj;
+        }
     }
 
     template <typename ArgType>

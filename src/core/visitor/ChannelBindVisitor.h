@@ -14,7 +14,9 @@ public:
     void visit(Path entity, int level) override {
         auto channelObject = entity.getObject("Channel");
         if (channelObject.ptr()) {
+            std::cout << "ChannelBind for channel: " << entity.getEntityPath() << "\n";
             auto channel = channelObject.as<Channel>();
+            channel->bind();
             auto master = channel->getMasterPort();
             master->addObserver([channel, portName = master->getRole() == PortRole::Master ? "Master" : "Slave"]() {
                 channel->portNotified(portName);

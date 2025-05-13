@@ -13,11 +13,11 @@
 enum class PortRole { Master, Slave };
 PortRole parse_role(std::string_view str) ;
 
-struct PortGeneric;
+struct PortData;
 
 class Port {
 public:
-    using GenericType = std::shared_ptr<PortGeneric>;
+    using GenericType = std::shared_ptr<PortData>;
     GenericType generic_;
 
     explicit Port(GenericType generic) 
@@ -68,7 +68,7 @@ public:
     //Port& operator=(const Port&) = delete;
 };
 
-struct PortGeneric {
+struct PortData {
     using OwnerType = Port;
     EntityHashType entity_hash;
     ObjPtr<Port> peer_;

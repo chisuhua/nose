@@ -17,14 +17,14 @@ public:
     }
 
     void visitObject(const std::shared_ptr<Component>& obj, StringRef name, Path obj_path) override {
-        std::cout << "ComponentBind visitObject type_name: " << name->str() << " at path:" << obj_path.getEntityPath() << "\n";
+        std::cout << "visitObject type_name: " << name->str() << " at path:" << obj_path.getEntityPath() << "\n";
         auto component = std::dynamic_pointer_cast<Component>(obj);
         //using ObjType = decltype(obj);
         //std::cout << "ObjType is " << TypeInfo::getTypeName<ObjType>()->str() << "\n";
         if (component) {
             std::cout << "found component for " << obj_path.getName() << "\n";
             for (const auto& [key, childEntity] : obj_path.getChildren()) {
-                std::cout << "  component's sub entity  for " << key << " for child " << childEntity->getName() << "\n";
+                std::cout << "  component's sub entity  for " << key << "for child " << childEntity->getName() << "\n";
                 auto portObj = childEntity->getObject<Port>();
                 if (portObj) {
                     auto port = portObj->as<Port>();
